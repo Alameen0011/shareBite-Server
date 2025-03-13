@@ -1,0 +1,15 @@
+# Node modules
+node_modules/
+
+# Compiled JavaScript files
+dist/
+
+# Logs
+logs/
+*.log
+
+# Environment variables
+.env
+
+# Debugging files
+npm-debug.log*
