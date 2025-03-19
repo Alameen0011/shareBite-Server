@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import { IUser } from "../interfaces/user";
 
+
 const UserSchema = new mongoose.Schema<IUser>(
   {
     name: {
@@ -46,6 +47,10 @@ const UserSchema = new mongoose.Schema<IUser>(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Kiosk",
       default: null, // Only for kiosk managers
+    },
+    verified: {
+      type: Boolean,
+      default: false,
     },
     oauthProvider: {
       type: String,

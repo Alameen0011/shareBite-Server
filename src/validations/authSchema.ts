@@ -7,5 +7,5 @@ export const signupSchema = z.object({
 
 export const loginSchema = z.object({
     email: z.string().email({ message: "Invalid email format" }),
-    role: z.string()
+    
 });

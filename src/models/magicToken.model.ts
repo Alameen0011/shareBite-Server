@@ -2,8 +2,9 @@ import mongoose, { Model } from "mongoose";
 import { IMagicToken } from "../interfaces/auth";
 
 const magicTokenSchema = new mongoose.Schema <IMagicToken> ({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  email: { type: String, required: true },
   token: { type: String, required: true, unique: true },
+  role: { type: String, required: true },
   expiresAt: { type: Date, required: true },
 });
 

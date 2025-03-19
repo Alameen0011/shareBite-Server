@@ -23,21 +23,15 @@ export const registerUser = async (  req: Request, res: Response,  next: NextFun
       return;
     }
 
-    const user = await User.create({
-      email,
-      role,
-    });
-
     const magicToken = crypto.randomBytes(32).toString("hex");
 
     // Save token in DB (expire in 15 minutes)
     await MagicToken.create({
-      userId: user._id,
+      email:email,
       token: magicToken,
+      role:role,
       expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 min expiry
     });
-
-    console.log(config.EMAIL_APP,email)
 
     //send email with magic link
     const magicLink = `${config.FRONTEND_URL}/auth/magic-login?token=${magicToken}`;
@@ -48,7 +42,7 @@ export const registerUser = async (  req: Request, res: Response,  next: NextFun
       html: `<p>Click <a href="${magicLink}">here</a> to log in.</p>`,
     });
 
-    res.json({ success: true, message: "Magic link sent to your email!" });
+    res.status(200).json({ success: true, message: "Magic link sent to your email!" });
   } catch (error) {
     next(error);
   }
@@ -66,6 +60,7 @@ export const verifyRegistration = async ( req: Request, res: Response, next: Nex
         success: false,
         message: "Invalid or expired magic link",
       });
+      return;
     }
 
     if (magicToken!.expiresAt < new Date()) {
@@ -74,31 +69,44 @@ export const verifyRegistration = async ( req: Request, res: Response, next: Nex
         success: false,
         message: "Magic token expired",
       });
+      return;
     }
 
-    const user = await User.findById(magicToken?.userId);
+    const email = magicToken?.email;
+    const roles = magicToken?.role;
+    
+
+    if (!email || !roles) {
+       res.status(400).json({ success: false, message: "Invalid token data" })
+       return;
+     }
+
+
+    let user = await User.findOne({ email });
+
     if (!user) {
-      res.status(404).json({
-        success: false,
-        message: "User not found",
+      user = await User.create({
+        email: email,
+        role: roles, 
+        verified: true,
       });
     }
 
     await MagicToken.deleteOne({ token });
 
+
     if (!user || !user.role) {
-      return res.status(400).json({
+       res.status(400).json({
         success: false,
         message: "User role is missing",
       });
+      return;
     }
 
     const id = user?.id;
     const role = user?.role;
 
     const accessToken = generateToken(id, role, res);
-
-    console.log(accessToken, "accessToken");
 
     res.status(201).json({
       success: true,
@@ -120,6 +128,7 @@ export const LoginUser = async ( req: Request,res: Response, next: NextFunction)
 
     const existingUser = await User.findOne({ email });
 
+
     if (!existingUser) {
         res.status(404).json({
             success:false,
@@ -132,8 +141,9 @@ export const LoginUser = async ( req: Request,res: Response, next: NextFunction)
 
       // Save token in DB (expire in 15 minutes)
       await MagicToken.create({
-        userId: existingUser!._id,
+        email: existingUser.email,
         token: magicToken,
+        role: existingUser.role,
         expiresAt: new Date(Date.now() + 15 * 60 * 1000), // 15 min expiry
       });
 
@@ -153,11 +163,11 @@ export const LoginUser = async ( req: Request,res: Response, next: NextFunction)
   }
 };
 
-// 🔹 VERIFY REGISTER (verify-magic-link)
+// 🔹 VERIFY LOGIN (verify-magic-link)
 export const verifyLogin = async ( req: Request, res: Response, next: NextFunction ) => {
     try {
       const { token } = req.query;
-  
+
       const magicToken = await MagicToken.findOne({ token });
   
       if (!magicToken) {
@@ -165,6 +175,7 @@ export const verifyLogin = async ( req: Request, res: Response, next: NextFuncti
           success: false,
           message: "Invalid or expired magic link",
         });
+        return;
       }
   
       if (magicToken!.expiresAt < new Date()) {
@@ -173,38 +184,41 @@ export const verifyLogin = async ( req: Request, res: Response, next: NextFuncti
           success: false,
           message: "Magic token expired",
         });
+        return;
       }
   
-      const user = await User.findById(magicToken?.userId);
-      if (!user) {
-        res.status(404).json({
-          success: false,
-          message: "User not found",
-        });
-      }
+      const email = magicToken?.email;
+  
+      if (!email) {
+         res.status(400).json({ success: false, message: "Invalid token data" })
+         return;
+       }
+  
+  
+      let user = await User.findOne({ email });
   
       await MagicToken.deleteOne({ token });
   
       if (!user || !user.role) {
-        return res.status(400).json({
+       res.status(400).json({
           success: false,
           message: "User role is missing",
         });
+        return;
       }
   
       const id = user?.id;
       const role = user?.role;
   
       const accessToken = generateToken(id, role, res);
-  
-      console.log(accessToken, "accessToken");
-  
+
       res.status(201).json({
         success: true,
         token: accessToken,
         role: role,
         message: "user Logined successfully",
       });
+      
     } catch (error) {
       next(error);
     }
@@ -217,16 +231,20 @@ export const verifyLogin = async ( req: Request, res: Response, next: NextFuncti
 
 
 // 🔹 GOOGLE AUTH LOGIN
-export const googleAuth = (req: Request, res: Response) => {
-  try {
-  } catch (error) {
-    console.log(error);
-  }
-};
+// export const googleAuth = (req: Request, res: Response) => {
+//   try {
+
+   
+
+
+//   } catch (error) {
+//     console.log(error);
+//   }
+// };
 
 
 // 🔹 LOGOUT
-export const LogoutUser = (req: Request, res: Response , next: NextFunction) => {
+export const LogoutUser = (_req: Request, res: Response , next: NextFunction) => {
   try {
     res.cookie("jwt", "", { 
         httpOnly: true, 

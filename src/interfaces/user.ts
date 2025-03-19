@@ -8,6 +8,7 @@ export interface IUser extends Document {
     phone?: string;
     address?: string;
     isBlocked: boolean;
+    verified: boolean;
     donations?: Types.ObjectId[];
     kioskId?: Types.ObjectId | null;
     oauthProvider: "google" | "facebook" | "none";

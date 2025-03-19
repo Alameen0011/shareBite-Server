@@ -1,5 +1,5 @@
 import { Request } from "express";
-import mongoose, { Document, Schema, Model } from "mongoose";
+import  { Document } from "mongoose";
 
 
 export interface DecodedToken {
@@ -14,8 +14,9 @@ export interface AuthRequest extends Request {
 }
 
 export interface IMagicToken extends Document {
-    userId: mongoose.Types.ObjectId;
+    email: string;
     token: string;
+    role: string;
     expiresAt: Date;
   }
 
