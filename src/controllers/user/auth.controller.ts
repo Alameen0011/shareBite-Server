@@ -6,6 +6,8 @@ import crypto from "crypto";
 import MagicToken from "../../models/magicToken.model";
 import { transporter } from "../../utils/mail";
 import { generateToken } from "../../utils/token";
+import jwt from "jsonwebtoken"
+import { DecodedToken } from "../../interfaces/auth";
 
 // 🔹 REGISTER (Signup-send-magic-link)
 export const registerUser = async (  req: Request, res: Response,  next: NextFunction ) => {
@@ -34,7 +36,7 @@ export const registerUser = async (  req: Request, res: Response,  next: NextFun
     });
 
     //send email with magic link
-    const magicLink = `${config.FRONTEND_URL}/auth/magic-login?token=${magicToken}`;
+    const magicLink = `${config.FRONTEND_URL}/auth/verify?token=${magicToken}`;
     await transporter.sendMail({
       from: config.EMAIL_APP,
       to: email,
@@ -52,6 +54,8 @@ export const registerUser = async (  req: Request, res: Response,  next: NextFun
 export const verifyRegistration = async ( req: Request, res: Response, next: NextFunction ) => {
   try {
     const { token } = req.query;
+
+    console.log(token,"token")
 
     const magicToken = await MagicToken.findOne({ token });
 
@@ -241,6 +245,47 @@ export const verifyLogin = async ( req: Request, res: Response, next: NextFuncti
 //     console.log(error);
 //   }
 // };
+
+
+export const refreshAccess = (req: Request, res: Response, next:NextFunction) => {
+  try {
+    console.log(req.cookies);
+    // Get the refresh token from the HTTP-only cookie
+    const refreshToken = req.cookies.refreshToken;
+
+    console.log("refreshToken", refreshToken);
+
+    if (!refreshToken) {
+       res.status(401).json({ success: false, message: "No refresh token provided" })
+       return;
+    }
+    // Verify the refresh token
+    const decoded = jwt.verify( refreshToken,config.JWT_REFRESH_KEY)  as DecodedToken
+
+    console.log(decoded);
+
+    if (!decoded) {
+       res.status(403).json({ success: false, message: "Invalid refresh token" })
+       return;
+    }
+
+        // Generate a new access token using the decoded userId and role
+        const newAccessToken = jwt.sign(
+          { id: decoded!.id, role: decoded!.role }, // No DB call needed, role is in the token
+          config.JWT_ACCESS_KEY,
+          { expiresIn: "1d" } 
+        )
+    
+   
+   
+
+
+     res.status(200).json({  token: newAccessToken, success:true, role: decoded.role,});
+  } catch (error) {
+    console.error("Error verifying refresh token:", error);
+    next(error)
+  }
+};
 
 
 // 🔹 LOGOUT
