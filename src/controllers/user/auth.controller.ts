@@ -8,6 +8,12 @@ import { transporter } from "../../utils/mail";
 import { generateToken } from "../../utils/token";
 import jwt from "jsonwebtoken"
 import { DecodedToken } from "../../interfaces/auth";
+import { OAuth2Client } from "google-auth-library";
+
+
+
+
+const client = new OAuth2Client(config.GOOGLE_CLIENT_ID)
 
 // 🔹 REGISTER (Signup-send-magic-link)
 export const registerUser = async (  req: Request, res: Response,  next: NextFunction ) => {
@@ -152,7 +158,7 @@ export const LoginUser = async ( req: Request,res: Response, next: NextFunction)
       });
 
       //send email with magic link
-      const magicLink = `${config.FRONTEND_URL}/auth/magic-login?token=${magicToken}`;
+      const magicLink = `${config.FRONTEND_URL}/auth/verify-login?token=${magicToken}`;
 
       await transporter.sendMail({
         from: config.EMAIL_APP,
@@ -235,23 +241,66 @@ export const verifyLogin = async ( req: Request, res: Response, next: NextFuncti
 
 
 // 🔹 GOOGLE AUTH LOGIN
-// export const googleAuth = (req: Request, res: Response) => {
-//   try {
+export const googleAuth = async (req: Request, res: Response, next: NextFunction) => {
 
-   
+  const { token } = req.body;
+  console.log(token,"token send through api")
+  try {
+    // Verify Google Token
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: config.GOOGLE_CLIENT_ID,
+    });
 
+    console.log(ticket,"========================ticket")
 
-//   } catch (error) {
-//     console.log(error);
-//   }
-// };
+    const payload = ticket.getPayload();
+    console.log(payload, "================Payload from Google");
+
+    const email = payload?.email
+
+    let user = await User.findOne({ email });
+
+    // If user does not exist, create a new one
+    if (!user) {
+      user = await User.create({
+        email,
+        role: "donor",
+        verified: true,
+      });
+    }
+
+    // Extract ID and role
+    const id = user.id;
+    const role = user.role;
+
+    console.log(id, "== userID Google Auth", role, "== role");
+
+    // Generate access token
+    const accessToken = generateToken(id, role, res);
+
+    // Send response with token & role
+    res.status(201).json({
+      success: true,
+      token: accessToken,
+      role: role,
+      message: user ? "User logged in successfully" : "User created successfully",
+    });
+
+  } catch (error) {
+    console.log(error,"error in api");
+    next(error);
+  }
+};
+
 
 
 export const refreshAccess = (req: Request, res: Response, next:NextFunction) => {
   try {
+    console.log("inside refresh access api")
     console.log(req.cookies);
     // Get the refresh token from the HTTP-only cookie
-    const refreshToken = req.cookies.refreshToken;
+    const refreshToken = req.cookies.jwt;
 
     console.log("refreshToken", refreshToken);
 
