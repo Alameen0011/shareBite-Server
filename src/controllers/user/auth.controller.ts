@@ -96,6 +96,7 @@ export const verifyRegistration = async ( req: Request, res: Response, next: Nex
 
     if (!user) {
       user = await User.create({
+        name:  roles === "donor" ? "Donor" : "Volunteer",
         email: email,
         role: roles, 
         verified: true,
@@ -212,7 +213,7 @@ export const verifyLogin = async ( req: Request, res: Response, next: NextFuncti
       if (!user || !user.role) {
        res.status(400).json({
           success: false,
-          message: "User role is missing",
+          message: "User is missing. Please register",
         });
         return;
       }
