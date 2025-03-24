@@ -1,9 +1,23 @@
 {
   "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src",
-    "strict": true,
-    "moduleResolution": "node",
-    "esModuleInterop": true
-  }
+    "target": "ES2015",          // Modern ES version for better performance
+    "module": "CommonJS",       // Required for Node.js (Use "ESNext" if using ESM)
+    "lib": ["ES2022"],          // Ensures async/await and modern features work
+    "outDir": "./dist",         // Compiled files go here
+    "rootDir": "./src",         // Source TypeScript files location
+    "strict": true,             // Enable all strict type-checking options
+    "moduleResolution": "node", // Helps with imports
+    "esModuleInterop": true,    // Fixes issues with default imports from CommonJS modules
+    "forceConsistentCasingInFileNames": true, // Enforces consistent file casing
+    "skipLibCheck": true,       // Skips type checking of declaration files (faster builds)
+    "resolveJsonModule": true,  // Allows importing JSON files
+    "allowSyntheticDefaultImports": true, // Helps with certain imports (e.g., React)
+    "noImplicitAny": true,      // Prevents implicit `any` types
+    "noUnusedLocals": true,     // Warns about unused variables
+    "noUnusedParameters": true, // Warns about unused function parameters
+    "noFallthroughCasesInSwitch": true, // Prevents unintentional fallthrough in switch
+    "noEmitOnError": true       // Prevents emitting files if there are TypeScript errors
+  },
+  "include": ["src"],   // Only compile files inside `src/`
+  "exclude": ["node_modules", "dist"] // Don't compile dependencies or build output
 }
