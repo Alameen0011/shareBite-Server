@@ -18,6 +18,9 @@ export interface IDonation extends Document {
     | "discarded";
   volunteer?: Types.ObjectId | null;
   kiosk?: Types.ObjectId | null;
+  claimedAt?:Date;
+  pickedUpAt?:Date;
+  deliveredAt?:Date
   createdAt?: Date;
   updatedAt?: Date;
 }

@@ -5,8 +5,8 @@ const pickupLocationSchema = z.object({
     type: z.literal("Point"),//Ensures only point is allowed
     coordinates: z
         .array(z.number())
-        .length(2, "Coordinates must contain exactly [longitude, latitude]"),
-        address: z.string().min(5, "Address must be at least 5 characters")
+        .length(2, "Coordinates are required"),
+        address: z.string().min(5, "Address is required")
 });
 
 

@@ -8,9 +8,11 @@ export const createDonation = async (req: AuthRequest,res: Response, next: NextF
     try {
         const validatedData = donationSchema.parse(req.body)
 
+        console.log(validatedData,"data came to backend")
+
         const { type, quantity, expiry, pickupLocation, image } = validatedData
 
-        const donor = req?.user?.id
+        const donor = req?.user?.id || "67dbc162c75856aee64a2224"
 
         if(!image){
             res.status(400).json({
@@ -47,7 +49,8 @@ export const createDonation = async (req: AuthRequest,res: Response, next: NextF
 export const getDonations =async (req: AuthRequest,res: Response, next: NextFunction) => {
     try {
         
-        const donor = req?.user?.id
+        const donor = req?.user?.id 
+        console.log("finded the donor ::", donor)
         const {status,type} = req.query;
 
         
@@ -57,13 +60,17 @@ export const getDonations =async (req: AuthRequest,res: Response, next: NextFunc
         if(status) filter.status = status
         if(type) filter.type = type
 
+        console.log(filter,":: filters")
+
 
        
         const donations = await Donation.find(filter)
         .populate("donor","name email")
-        .populate("volunteer","name email")
-        .populate("kiosk","name email")
+        // .populate("volunteer","name email")
+        // .populate("kiosk","name email")
         .sort({ createdAt: -1 })
+
+        console.log(donations,":: donations queryied")
 
         if(!donations){
             res.status(404).json({
@@ -92,8 +99,10 @@ export const getSingleDonation = async (req: AuthRequest,res: Response, next: Ne
 
         const donation = await Donation.findById(id)
         .populate("donor","name email")
-        .populate("volunteer","name email")
-        .populate("kiosk","name location");
+        // .populate("volunteer","name email")
+        // .populate("kiosk","name location");
+
+        console.log(donation)
 
         if(!donation){
             res.status(404).json({
@@ -105,7 +114,8 @@ export const getSingleDonation = async (req: AuthRequest,res: Response, next: Ne
 
         res.status(200).json({
             success:true,
-            donation
+            donation,
+            
         })
         
     } catch (error) {
@@ -118,9 +128,13 @@ export const updateDonation = async (req: AuthRequest,res: Response, next: NextF
     try {
         const { id } = req.params
 
-        const validatedUpdates = updateDonationSchema.parse(req.body);
 
-        const donation = await Donation.findOne({ _id:id,donor:req.user?.id })
+        console.log(req.body)
+
+        const validatedUpdates = updateDonationSchema.parse(req.body);
+        console.log(validatedUpdates,":: DATA")
+
+        const donation = await Donation.findOne({ _id:id,donor:req.user?.id  })
 
         if(!donation){
             res.status(404).json({
@@ -133,8 +147,9 @@ export const updateDonation = async (req: AuthRequest,res: Response, next: NextF
         if(donation.status !== "pending"){
             res.status(400).json({
                 success:false,
-                message: "Cannot update a claimed donation"
+                message: "Cannot update a claimed or cancelled donation"
             })
+            return;
         }
 
         //Manual Update & Save
@@ -177,7 +192,7 @@ export const deleteDonation = async (req: AuthRequest,res: Response, next: NextF
         const { id } = req.params
 
 
-        const donation = await Donation.findOne({ _id:id , donor:req.user?.id })
+        const donation = await Donation.findOne({ _id:id , donor:req.user?.id})
 
         if(!donation){
             res.status(404).json({
