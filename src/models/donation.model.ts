@@ -81,6 +81,7 @@ const DonationSchema = new mongoose.Schema<IDonation>(
   },
   { timestamps: true }
 );
+DonationSchema.index({ pickupLocation: "2dsphere" });
 
 const Donation = mongoose.model<IDonation>("Donation", DonationSchema);
 
