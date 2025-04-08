@@ -14,5 +14,4 @@ logs/
 # Debugging files
 npm-debug.log*
 
-
-config/env.ts
+src/config/env.ts
