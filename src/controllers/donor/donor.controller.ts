@@ -2,15 +2,22 @@ import { AuthRequest } from "../../interfaces/auth"
 import { NextFunction, Response } from "express"
 import Donation from "../../models/donation.model"
 import { donationSchema, updateDonationSchema } from "../../validations/donationSchema";
+import { notifyNearbyVolunteers } from "../../sockets/volunteer.socket";
+
 
 
 export const createDonation = async (req: AuthRequest,res: Response, next: NextFunction) => {
     try {
+        const io = req.app.get("io")
+
+
         const validatedData = donationSchema.parse(req.body)
+
+
 
         console.log(validatedData,"data came to backend")
 
-        const { type, quantity, expiry, pickupLocation, image } = validatedData
+        const { title, type, quantity, expiry, pickupLocation, image } = validatedData
 
         const donor = req?.user?.id || "67dbc162c75856aee64a2224"
 
@@ -22,6 +29,7 @@ export const createDonation = async (req: AuthRequest,res: Response, next: NextF
         }
 
         const newDonation =  await Donation.create({
+            title,
             donor,
             type,
             quantity,
@@ -33,6 +41,10 @@ export const createDonation = async (req: AuthRequest,res: Response, next: NextF
             },
             image: image
         })
+
+        notifyNearbyVolunteers(io,newDonation)
+
+
 
         res.status(201).json({
             success:true,
@@ -227,3 +239,5 @@ export const deleteDonation = async (req: AuthRequest,res: Response, next: NextF
         
     }
 }
+
+
