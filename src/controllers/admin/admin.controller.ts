@@ -57,7 +57,6 @@ export const getAllUsersForAdmin =  async (req: AuthRequest,res: Response, next:
 
 } 
 
-
 export const toggleBlockUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
         const userId = req.params.id;

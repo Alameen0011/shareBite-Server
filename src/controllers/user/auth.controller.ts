@@ -236,11 +236,6 @@ export const verifyLogin = async ( req: Request, res: Response, next: NextFuncti
   };
 
 
-
-
-
-
-
 // 🔹 GOOGLE AUTH LOGIN
 export const googleAuth = async (req: Request, res: Response, next: NextFunction) => {
 
@@ -294,8 +289,7 @@ export const googleAuth = async (req: Request, res: Response, next: NextFunction
   }
 };
 
-
-
+// 🔹 NEW ACCESSTOKEN USING REFRESH
 export const refreshAccess = (req: Request, res: Response, next:NextFunction) => {
   try {
     console.log("inside refresh access api")
@@ -336,7 +330,6 @@ export const refreshAccess = (req: Request, res: Response, next:NextFunction) =>
     next(error)
   }
 };
-
 
 // 🔹 LOGOUT
 export const LogoutUser = (_req: Request, res: Response , next: NextFunction) => {
