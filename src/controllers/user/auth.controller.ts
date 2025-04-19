@@ -168,7 +168,7 @@ export const LoginUser = async ( req: Request,res: Response, next: NextFunction)
         html: `<p>Click <a href="${magicLink}">here</a> to log in.</p>`,
       });
 
-      res.json({ success: true, message: "Magic link sent to your email!" });
+      res.json({ success: true, message: "please check you email!" });
   } catch (error) {
     next(error);
   }

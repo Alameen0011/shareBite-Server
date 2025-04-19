@@ -1,6 +1,7 @@
 import { Document, Types } from "mongoose";
 
 export interface IDonation extends Document {
+  title: string
   donor: Types.ObjectId;
   type: "perishable" | "non-perishable" | "cooked";
   quantity: number;
@@ -16,6 +17,10 @@ export interface IDonation extends Document {
     | "available_for_distribution"
     | "distributed"
     | "discarded";
+  otp?:string,
+  otpUsed?: boolean;
+  deliveryOtp?:string,
+  deliveryOtpUsed?:boolean,
   volunteer?: Types.ObjectId | null;
   kiosk?: Types.ObjectId | null;
   claimedAt?:Date;

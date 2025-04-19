@@ -1,8 +1,14 @@
 import mongoose from "mongoose";
 import { IDonation } from "../interfaces/donation";
+import { generateOtp } from "../utils/otp";
 
 const DonationSchema = new mongoose.Schema<IDonation>(
   {
+    title: {
+      type: String,
+      required: true,
+      default: null,
+    },
     donor: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -16,6 +22,7 @@ const DonationSchema = new mongoose.Schema<IDonation>(
     quantity: {
       type: Number,
       required: true,
+      default: null,
     },
     expiry: {
       type: Date,
@@ -41,6 +48,7 @@ const DonationSchema = new mongoose.Schema<IDonation>(
     image: {
       type: String, // Cloudinary image URL
       required: true, // Ensure every donation has an image
+      default: null,
     },
     status: {
       type: String,
@@ -63,7 +71,7 @@ const DonationSchema = new mongoose.Schema<IDonation>(
     },
     kiosk: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Kiosk",
+      // ref: "Kiosk",
       default: null,
     },
     claimedAt: {
@@ -78,9 +86,33 @@ const DonationSchema = new mongoose.Schema<IDonation>(
       type: Date,
       default: null,
     },
+    otp: {
+      type: String,
+    },
+    otpUsed: {
+       type: Boolean,
+        default: false 
+      },
+      deliveryOtp: {
+        type: String,
+        default:null
+      },
+      deliveryOtpUsed:{
+        type: Boolean,
+        default: false,
+      }
   },
   { timestamps: true }
 );
+DonationSchema.index({ pickupLocation: "2dsphere" });
+
+DonationSchema.pre("save", function (next) {
+  if (this.isNew) {
+    this.otp = generateOtp(6); // 🔑 6-digit OTP
+   
+  }
+  next();
+});
 
 const Donation = mongoose.model<IDonation>("Donation", DonationSchema);
 

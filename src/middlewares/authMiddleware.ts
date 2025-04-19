@@ -25,7 +25,7 @@ export const protect  = async (req: AuthRequest , res: Response, next: NextFunct
 
     try {
 
-        const decoded =  jwt.verify(token, config.JWT_ACCESS_KEY!) as DecodedToken;
+        const decoded =  jwt.verify(token, config.JWT_ACCESS_KEY) as DecodedToken;
         console.log(decoded,"==========token decoded")
         req.user = { id: decoded.id, role: decoded.role };
         next();
