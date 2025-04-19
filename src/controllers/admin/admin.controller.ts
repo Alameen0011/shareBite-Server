@@ -12,18 +12,19 @@ export const getAllUsersForAdmin =  async (req: AuthRequest,res: Response, next:
 
 
         const filter: any = {
-            ...(role ? { role } : {} ),
+            ...(role && role !== "all" ? { role } : {}),
             ...(search && {
-                $or: [
-                    { name: { $regex: search, $options: "i" } },
-                    { email: { $regex: search, $options: "i" } },0
-                ]
+              $or: [
+                { name: { $regex: search, $options: "i" } },
+                { email: { $regex: search, $options: "i" } }
+              ]
             })
-        }
+          };
 
         const skip = (page - 1) * limit
         const totalUsers = await User.countDocuments(filter)
         const totalPages = Math.ceil(totalUsers/ limit)
+      
 
 
 
@@ -78,7 +79,7 @@ export const toggleBlockUser = async (req: AuthRequest, res: Response, next: Nex
    
         await user.save();
 
-        return res.status(200).json({
+       res.status(200).json({
             success: true,
             message: `User ${user.isBlocked ? 'blocked' : 'unblocked'} successfully`,
             user: {

@@ -1,20 +1,25 @@
 import express from "express"
-import { authorizeRoles, protect } from "../middlewares/authMiddleware"
-import { AdminController, KioskController } from "../controllers"
+import { AdminController, KioskController, MessageController } from "../controllers"
 
 
 const router = express.Router()
 
 // User management
-router.get("/users",protect,authorizeRoles("admin"),AdminController.getAllUsersForAdmin)
-router.patch("/user/:id/block",protect,authorizeRoles("admin"),AdminController.getAllUsersForAdmin)
+router.get("/users",AdminController.getAllUsersForAdmin)
+router.patch("/user/:id/block",AdminController.toggleBlockUser)
 
 
 // Kiosk Management
-router.get('/kiosks',protect,authorizeRoles("admin"),KioskController.getAllKiosks)
-router.post('/kiosks', protect, authorizeRoles("admin"), KioskController.addKiosk);
-router.patch('/kiosks/:id', protect, authorizeRoles("admin"),KioskController.editKiosk);
-router.delete('/kiosks/:id', protect, authorizeRoles("admin"), KioskController.deleteKiosk);
+router.get('/kiosks',KioskController.getAllKiosks)
+router.get('/kiosk/:id',KioskController.getSingleKiosk)
+router.post('/kiosks',  KioskController.addKiosk);
+router.patch('/kiosks/:id',KioskController.editKiosk);
+router.delete('/kiosks/:id',KioskController.deleteKiosk);
+
+
+//Support - messages
+router.get("/message/:id",MessageController.getMessages)
+router.post("/message/send/:id",MessageController.sendMessage)
 
 
 

@@ -6,14 +6,26 @@ interface IKiosk extends Document {
   location: {
     type: string; // "Point"
     coordinates: [number, number];
+    address: string;
   };
 }
 
 const kioskSchema = new Schema<IKiosk>({
   name: { type: String, required: true },
   location: {
-    type: { type: String, enum: ["Point"], required: true },
-    coordinates: { type: [Number], required: true },
+    type: {
+      type: String,
+      enum: ["Point"],
+      required: true,
+    },
+    coordinates: {
+      type: [Number],
+      required: true,
+    },
+    address: {
+      type: String, // Optional: Store human-readable address
+      required: true,
+    },
   },
 });
 
