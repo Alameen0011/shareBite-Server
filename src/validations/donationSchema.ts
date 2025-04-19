@@ -11,6 +11,7 @@ const pickupLocationSchema = z.object({
 
 
 export const donationSchema = z.object({
+    title:z.string(),
     type: z.enum(["perishable","non-perishable","cooked"]),
     quantity: z.number().min(1, "Quantity must be atleast 1"),
     expiry: z.union([z.string().datetime(), z.null()]).optional(), //Optional expiry

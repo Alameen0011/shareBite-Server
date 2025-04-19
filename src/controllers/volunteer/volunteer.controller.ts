@@ -1,10 +1,14 @@
 import { NextFunction, Response } from "express";
 import { AuthRequest } from "../../interfaces/auth";
 import Donation from "../../models/donation.model";
+import { getDistanceFromLatLonInKm } from "../../utils/harvasine";
+import { generateOtp } from "../../utils/otp";
+import mongoose from "mongoose";
 
 export const getAvailableDonations = async ( req: AuthRequest, res: Response, next: NextFunction) => {
+
   try {
-    console.log("hello there");
+
     const { lat, lng, radius = 5 } = req.query; //radius in km
 
     if (!lat || !lng) {
@@ -41,10 +45,16 @@ export const getAvailableDonations = async ( req: AuthRequest, res: Response, ne
   }
 };
 
-export const claimDonation = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const claimDonation = async ( req: AuthRequest, res: Response, next: NextFunction) => {
+
   try {
+    const io = req.app.get("io")
+
     const donationId = req.params.id;
     const volunteerId = req.user?.id;
+
+    console.log(donationId, "donation IDDD");
+    console.log(volunteerId, "volunteer IDdd");
 
     // Atomic update (avoids race conditions)
     const donation = await Donation.findOneAndUpdate(
@@ -57,13 +67,14 @@ export const claimDonation = async (req: AuthRequest, res: Response, next: NextF
         $set: {
           volunteer: volunteerId,
           status: "claimed",
-          claimedAt: new Date()
+          claimedAt: new Date(),
         },
       },
       {
         new: true, // return updated doc
       }
-    ).populate("donor", "name email");
+    ).populate("donor", "name email")
+    .select("-otp");
 
     if (!donation) {
       res.status(400).json({
@@ -74,10 +85,10 @@ export const claimDonation = async (req: AuthRequest, res: Response, next: NextF
     }
 
     // 🎯 Real-time update to notify others
-    // io.emit("donationClaimed", {
-    //   donationId,
-    //   claimedBy: volunteerId,
-    // });
+    io.emit("donationClaimed", {
+      donationId,
+      claimedBy: volunteerId,
+    });
 
     res.status(200).json({
       success: true,
@@ -90,91 +101,247 @@ export const claimDonation = async (req: AuthRequest, res: Response, next: NextF
   }
 };
 
-export const markAsPickedUp = async( req: AuthRequest, res: Response, next: NextFunction) => {
+export const verifyAndPickup = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
   try {
-    const donationId = req.params.id
-    const volunteerId = req.user?.id
+    console.log("reqbody:", req.body);
+    const donationId = req.params.id;
+    const volunteerId = req.user?.id;
+    const { otp } = req.body;
 
-    const donation = await Donation.findOneAndUpdate(
-        {
-            _id: donationId,
-            volunteer:volunteerId,
-            status: "claimed"
-        },
-        {
-            $set: {
-                status: "picked_up",
-                pickedUpAt: new Date()
-            }
-        },
-        { new : true }
-);
+    console.log("inside verify and pickup");
+    console.log(donationId, "donation IDDD");
+    console.log(volunteerId, "volunteer IDdd");
+    console.log(otp, "::: OTP");
 
-    if(!donation){
-        res.status(400).json({
-            success: false,
-            message: "Donation not found, or not claimable by you",
-        });
+    const donation = await Donation.findById(donationId);
+
+    if (!donation) {
+      res.status(404).json({ success: false, message: "Donation not found" });
+      return;
     }
 
-    //Emit socket Event
-    /* io.emit( "donationPickedUp",
-        { donationId, volunteerId }
-            ) 
-        */
+    if (donation.otpUsed) {
+      res
+        .status(400)
+        .json({ success: false, message: "OTP has already been used" });
+      return;
+    }
+
+    if (donation.otp !== otp) {
+      res.status(401).json({ success: false, message: "Invalid OTP" });
+      return;
+    }
+
+    // Verify volunteer and current status
+    if (
+      !donation.volunteer ||
+      donation.volunteer.toString() !== volunteerId ||
+      donation.status !== "claimed"
+    ) {
+      res.status(403).json({
+        success: false,
+        message: "Not authorized to pick this donation",
+      });
+      return;
+    }
+
+    // All checks passed
+    donation.otpUsed = true;
+    donation.status = "picked_up";
+    donation.pickedUpAt = new Date();
+    await donation.save();
+
+    // Optionally emit socket event
+    // io.emit("donationPickedUp", { donationId, volunteerId });
 
     res.status(200).json({
-        success:true,
-        message: "Donation marked as picked up",
-        donation,
-    })
-
-
-
+      success: true,
+      message: "OTP verified and donation picked up",
+      donation,
+    });
   } catch (error) {
     next(error);
   }
 };
 
-export const markAsDelivered = async( req: AuthRequest, res: Response, next: NextFunction) => {
+export const verifyAndDeliver = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const donationId = req.params.id;
     const volunteerId = req.user?.id;
+    const { otp } = req.body;
 
-    const donation = await Donation.findOneAndUpdate(
-        {
-            _id: donationId,
-            volunteer: volunteerId,
-            status: "picked_up"
-        },
-        {
-            $set: {
-                status:"delivered_to_kiosk",
-                deliveredAt: new Date()
-            },
-        },
-        {
-            new : true
-        }
-    )
+    console.log("inside verify and deliver");
+    console.log(donationId, "donation IDDD");
+    console.log(volunteerId, "volunteer IDdd");
+    console.log(otp, "::: OTP");
 
-    if(!donation){
-        res.status(404).json({
-            success:false,
-            message: "Donation not found or already delivered, or not picked up by you.."
-        });
+    const donation = await Donation.findById(donationId);
+
+    console.log(donation,"donation")
+
+    if (!donation) {
+      res.status(404).json({ success: false, message: "Donation not found" });
+      return;
     }
 
+    if (donation.deliveryOtpUsed) {
+      res
+        .status(400)
+        .json({ success: false, message: "OTP has already been used" });
+      return;
+    }
+
+    if (donation.deliveryOtp !== otp) {
+      res.status(401).json({ success: false, message: "Invalid OTP" });
+      return;
+    }
+
+    // Verify volunteer and current status
+    if (!donation.volunteer || donation.volunteer.toString() !== volunteerId || donation.status !== "picked_up") {
+      res.status(403).json({
+        success: false,
+        message: "Not authorized to deliver this donation",
+      });
+      return;
+    }
+
+    donation.deliveryOtpUsed = true;
+    donation.status = "delivered_to_kiosk";
+    donation.deliveredAt = new Date();
+    await donation.save();
+
+
+
     res.status(200).json({
-        success: true,
-        message: "Donation marked as delivered to kiosk",
-        donation,
-    })
-
-
-
+      success: true,
+      message: "Delivered successfully",
+      donation,
+    });
   } catch (error) {
     console.error("Delivery Error:", error);
+    next(error);
+  }
+};
+
+interface Kiosk {
+  _id: string;
+  name: string;
+  location: {
+    type: string;
+    coordinates: [number, number]; // [longitude, latitude]
+  };
+  distance?: number; // Optional distance property to store the calculated distance
+}
+
+export const nearestKiosk = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const { lat, lng } = req.query;
+    const { id } = req.params;
+
+    if (!lat || !lng) {
+      res.status(400).json({
+        success: false,
+        message: "missing lat and lng",
+      });
+      return;
+    }
+
+    const FromLat = parseFloat(lat as string);
+    const FromLng = parseFloat(lng as string);
+
+    // const kiosksNearby = await Kiosk.find({
+    //   location: {
+    //     $nearSphere: {
+    //       $geometry: {
+    //         type: "Point",
+    //         coordinates: [ FromLng, FromLat,], // [longitude, latitude]
+    //       },
+    //       $maxDistance: 5000, // Maximum distance in meters (5 km)
+    //     },
+    //   },
+    // }).limit(1); // Limit to the nearest kiosk only
+
+    const kiosksNearby: Kiosk[] = [
+      {
+        _id: "60d5f5f1c4f4e3a96c1c6a7a",
+        name: "Kiosk A",
+        location: {
+          type: "Point",
+          coordinates: [76.2008, 10.5235],
+        },
+      },
+      {
+        _id: "60d5f5f1c4f4e3a96c1c6a7z",
+        name: "Kiosk B",
+        location: {
+          type: "Point",
+          coordinates: [76.005, 10.005],
+        },
+      },
+      {
+        _id: "60d5f5f1c4f4e3a96c1c6a7u",
+        name: "Kiosk C",
+        location: {
+          type: "Point",
+          coordinates: [76.01, 10.01],
+        },
+      },
+    ];
+
+    // if (kiosksNearby.length === 0) {
+    //   res.status(404).json({
+    //     success: false,
+    //     message: "No kiosks found nearby",
+    //   })
+    //   return;
+    // }
+
+    const donation = await Donation.findById(id);
+
+    if (!donation) {
+     res.status(404).json({ success: false, message: "Donation not found" });
+     return ;
+    }
+
+    // Calculate the distance and sort kiosks by distance in ascending order
+    kiosksNearby.forEach((kiosk) => {
+      kiosk.distance = getDistanceFromLatLonInKm(
+        FromLat,
+        FromLng,
+        kiosk.location.coordinates[1],
+        kiosk.location.coordinates[0]
+      );
+    });
+
+    // Sort kiosks by the distance in ascending order
+    kiosksNearby.sort((a, b) => a.distance! - b.distance!);
+
+    const nearestKiosk = kiosksNearby[0];
+    const distance = nearestKiosk.distance!.toFixed(2);
+
+    donation.kiosk = new mongoose.Types.ObjectId(nearestKiosk._id);
+    donation.deliveryOtp = generateOtp(6);
+    await donation.save();
+
+    res.status(200).json({
+      success: true,
+      data:nearestKiosk,
+      distance,
+    });
+  } catch (error) {
+    console.error("Kios Error:", error);
     next(error);
   }
 };
