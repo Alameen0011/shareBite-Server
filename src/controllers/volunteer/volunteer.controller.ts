@@ -4,6 +4,7 @@ import Donation from "../../models/donation.model";
 import { getDistanceFromLatLonInKm } from "../../utils/harvasine";
 import { generateOtp } from "../../utils/otp";
 import mongoose from "mongoose";
+import { getIndividualSocketId } from "../../sockets";
 
 export const getAvailableDonations = async ( req: AuthRequest, res: Response, next: NextFunction) => {
 
@@ -108,6 +109,7 @@ export const verifyAndPickup = async (
 ) => {
   try {
     console.log("reqbody:", req.body);
+    const io = req.app.get("io")
     const donationId = req.params.id;
     const volunteerId = req.user?.id;
     const { otp } = req.body;
@@ -155,8 +157,10 @@ export const verifyAndPickup = async (
     donation.pickedUpAt = new Date();
     await donation.save();
 
-    // Optionally emit socket event
-    // io.emit("donationPickedUp", { donationId, volunteerId });
+
+    //realtime feature - toast to donor on pickup
+    const socketId = getIndividualSocketId(donation.donor.toString())
+    if(socketId) io.to(socketId).emit("donationPickedUp", { donationId, volunteerId });
 
     res.status(200).json({
       success: true,
@@ -174,6 +178,7 @@ export const verifyAndDeliver = async (
   next: NextFunction
 ) => {
   try {
+    const io = req.app.get("io")
     const donationId = req.params.id;
     const volunteerId = req.user?.id;
     const { otp } = req.body;
@@ -217,6 +222,10 @@ export const verifyAndDeliver = async (
     donation.status = "delivered_to_kiosk";
     donation.deliveredAt = new Date();
     await donation.save();
+
+     //realtime feature - toast to donor on delivery
+    const socketId = getIndividualSocketId(donation.donor.toString())
+    if(socketId) io.to(socketId).emit("donationDeliver", { donationId, volunteerId });
 
 
 

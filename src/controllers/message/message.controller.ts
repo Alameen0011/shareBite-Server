@@ -2,6 +2,7 @@ import { NextFunction, Response } from "express";
 import { AuthRequest } from "../../interfaces/auth";
 import { Message } from "../../models/message.model";
 import { getIndividualSocketId } from "../../sockets";
+import User from "../../models/user.model";
 
 export const getMessages = async (
   req: AuthRequest,
@@ -80,3 +81,52 @@ export const sendMessage = async (
     next(error);
   }
 };
+
+export const getUsersWhoMessagedAdmin =  async ( req: AuthRequest,res: Response, next: NextFunction) => {
+  try {
+    const adminId = req.user?.id
+
+      // Step 1: Find all messages where admin is either sender or receiver
+      const messages = await Message.find({
+        $or: [
+          { senderId: adminId },
+          { receiverId: adminId }
+        ]
+      })
+      .select('senderId receiverId')
+      .lean()
+
+
+         // Step 2: Collect all unique user IDs who interacted with the admin
+    const userIds = messages.reduce((acc: string[], message) => {
+      // Add senderId and receiverId to the accumulator array if they're not the admin
+      if (message.senderId.toString() !== adminId) acc.push(message.senderId.toString());
+      if (message.receiverId.toString() !== adminId) acc.push(message.receiverId.toString());
+      return acc;
+    }, []);
+
+        // Step 3: Remove duplicates
+        const uniqueUserIds = [...new Set(userIds)];
+
+         // Step 4: Fetch user data for those who interacted with the admin
+    const users = await User.find({ _id: { $in: uniqueUserIds } });
+
+
+     res.status(200).json({
+      success:true,
+      users,
+     });
+
+
+
+
+
+
+
+    
+  } catch (error) {
+    console.error("Error :", error);
+    next(error);    
+  }
+
+}

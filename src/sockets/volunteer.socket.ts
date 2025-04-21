@@ -55,9 +55,7 @@ export const handleVolunteerSockets = (socket: Socket) => {
 }
 
 
-export const notifyDonationClaimToDonor = (socket) => {
 
-}
 
 
 

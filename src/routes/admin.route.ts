@@ -19,6 +19,7 @@ router.delete('/kiosks/:id',KioskController.deleteKiosk);
 
 //Support - messages
 router.get("/message/:id",MessageController.getMessages)
+router.get("/message/users",MessageController.getUsersWhoMessagedAdmin)
 router.post("/message/send/:id",MessageController.sendMessage)
 
 
