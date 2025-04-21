@@ -239,13 +239,16 @@ export const verifyLogin = async ( req: Request, res: Response, next: NextFuncti
 // 🔹 GOOGLE AUTH LOGIN
 export const googleAuth = async (req: Request, res: Response, next: NextFunction) => {
 
-  const { token } = req.body;
-  console.log(token,"token send through api")
+  const { credential , client_id } = req.body;
+
+
+  console.log(credential,client_id)
+
   try {
     // Verify Google Token
     const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: config.GOOGLE_CLIENT_ID,
+      idToken: credential,
+      audience: client_id,
     });
 
     console.log(ticket,"========================ticket")

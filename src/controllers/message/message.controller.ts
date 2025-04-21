@@ -3,6 +3,7 @@ import { AuthRequest } from "../../interfaces/auth";
 import { Message } from "../../models/message.model";
 import { getIndividualSocketId } from "../../sockets";
 import User from "../../models/user.model";
+import mongoose from "mongoose";
 
 export const getMessages = async (
   req: AuthRequest,
@@ -66,8 +67,12 @@ export const sendMessage = async (
       text,
     });
 
+    console.log(newMessage, "Got the message Send")
+
     //realtime feature one to one messaging -one user posted a message and we will make the other guy aware of it at realtime
     const socketId = getIndividualSocketId(receiverId);
+
+    console.log(socketId,"Sockeet IDD Message Send realtime ++++++++++++++++ ")
 
     if (socketId) io.to(socketId).emit("newMessage", newMessage);
 
@@ -83,21 +88,30 @@ export const sendMessage = async (
 };
 
 export const getUsersWhoMessagedAdmin =  async ( req: AuthRequest,res: Response, next: NextFunction) => {
+  console.log("I am inisde the controller of get users messaged admin")
   try {
     const adminId = req.user?.id
+
+    console.log("Inside get Users who messaged admin ===============", adminId)
+
+    console.log("adminId passed to query:", adminId, typeof adminId);
+
+    const adminObjectId = new mongoose.Types.ObjectId(adminId);
 
       // Step 1: Find all messages where admin is either sender or receiver
       const messages = await Message.find({
         $or: [
-          { senderId: adminId },
-          { receiverId: adminId }
+          { senderId: adminObjectId },
+          { receiverId: adminObjectId }
         ]
       })
       .select('senderId receiverId')
       .lean()
 
+      console.log(messages,"message, user ---> admin")
 
-         // Step 2: Collect all unique user IDs who interacted with the admin
+
+     // Step 2: Collect all unique user IDs who interacted with the admin
     const userIds = messages.reduce((acc: string[], message) => {
       // Add senderId and receiverId to the accumulator array if they're not the admin
       if (message.senderId.toString() !== adminId) acc.push(message.senderId.toString());
@@ -105,10 +119,12 @@ export const getUsersWhoMessagedAdmin =  async ( req: AuthRequest,res: Response,
       return acc;
     }, []);
 
-        // Step 3: Remove duplicates
-        const uniqueUserIds = [...new Set(userIds)];
+    // Step 3: Remove duplicates
+    const uniqueUserIds = [...new Set(userIds)];
 
-         // Step 4: Fetch user data for those who interacted with the admin
+    console.log(uniqueUserIds,"user id contacted admin")
+
+   // Step 4: Fetch user data for those who interacted with the admin
     const users = await User.find({ _id: { $in: uniqueUserIds } });
 
 

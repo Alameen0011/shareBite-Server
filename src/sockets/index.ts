@@ -21,8 +21,6 @@ export const registerSocketHandlers = (io: Server) => {
       return socket.disconnect();
     }
 
-    console.log("User Connected :", socket.id);
-    console.log("user :", user);
 
     // Save mapping
     userSocketMap[user.id] = socket.id;

@@ -75,7 +75,6 @@ export const claimDonation = async ( req: AuthRequest, res: Response, next: Next
         new: true, // return updated doc
       }
     ).populate("donor", "name email")
-    .select("-otp");
 
     if (!donation) {
       res.status(400).json({
@@ -160,6 +159,8 @@ export const verifyAndPickup = async (
 
     //realtime feature - toast to donor on pickup
     const socketId = getIndividualSocketId(donation.donor.toString())
+    console.log(socketId,"Sockeet IDD  =====++++socket of doations pickedup")
+    console.log(`Emitting 'donationPickedUp' to donor: ${donation.donor.toString()}`);
     if(socketId) io.to(socketId).emit("donationPickedUp", { donationId, volunteerId });
 
     res.status(200).json({
@@ -225,7 +226,9 @@ export const verifyAndDeliver = async (
 
      //realtime feature - toast to donor on delivery
     const socketId = getIndividualSocketId(donation.donor.toString())
-    if(socketId) io.to(socketId).emit("donationDeliver", { donationId, volunteerId });
+ 
+    console.log(socketId,"Sockeet IDD  =====++++socket of doations delivver")
+    if(socketId) io.to(socketId).emit("donationDelivery", { donationId, volunteerId });
 
 
 
