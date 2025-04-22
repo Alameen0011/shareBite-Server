@@ -1,5 +1,5 @@
 import express from "express";
-import { UserAuthController } from "../controllers";
+import { UserAuthController, VideoController } from "../controllers";
 
 
 
@@ -12,6 +12,9 @@ router.post("/verify-login",UserAuthController.verifyLogin)
 router.post("/logout",UserAuthController.LogoutUser)
 router.post("/google-auth",UserAuthController.googleAuth)
 router.get("/refresh",UserAuthController.refreshAccess)
+
+
+router.get("/rtc-token",VideoController.zegoToken)
 
 
 export default router;

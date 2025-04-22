@@ -1,5 +1,5 @@
 import express from "express"
-import { AdminController, KioskController, MessageController } from "../controllers"
+import { AdminAnalyticsController, AdminController, KioskController, MessageController } from "../controllers"
 import { authorizeRoles, protect } from "../middlewares/authMiddleware"
 
 
@@ -26,6 +26,14 @@ router.delete('/kiosks/:id',protect,authorizeRoles("admin"),KioskController.dele
 router.get("/message/:id",protect,authorizeRoles("admin","volunteer","donor"), MessageController.getMessages)
 router.get("/message",protect,authorizeRoles("admin","volunteer","donor"),MessageController.getUsersWhoMessagedAdmin)
 router.post("/message/send/:id",protect,authorizeRoles("admin","volunteer","donor"),MessageController.sendMessage)
+
+
+//Admin-dashboard api's
+router.get('/totalDonations',protect,authorizeRoles("admin"), AdminAnalyticsController.getTotalDonations);
+router.get('/totalVolunteers',protect,authorizeRoles("admin"), AdminAnalyticsController.getTotalVolunteers);
+router.get('/totalDonors', protect,authorizeRoles("admin"),AdminAnalyticsController.getTotalDonors);
+router.get('/totalKiosks',protect,authorizeRoles("admin"), AdminAnalyticsController.getTotalKiosks);
+router.get('/donationTrend',protect,authorizeRoles("admin"),AdminAnalyticsController.getDonationTrend);
 
 
 

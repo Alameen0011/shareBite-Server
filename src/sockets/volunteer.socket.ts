@@ -7,7 +7,7 @@ const connectedVolunteers = new Map<string, {lat: number; lng: number}>();
 
 
 
-export const handleVolunteerSockets = (socket: Socket) => {
+export const handleVolunteerSockets = (socket: Socket, io:Server) => {
 
 
     //1. volunteer joins with location (recieved in server)
@@ -40,7 +40,16 @@ export const handleVolunteerSockets = (socket: Socket) => {
 
     })
 
-    //2.Volunteer pickup the donation -- emit to donor for toast
+    //2.Volunteer INstantiate a call socket.emit event from Support.tsx server listens here and give admin chance to accept or reject
+
+    socket.on("call_Request", (data) => {
+        console.log("call_Request from:", socket.data.user.role, data);
+      
+        // Forward to admin-room
+        io.to("admin-room").emit("call_Request", data);
+
+        
+    })
    
 
     

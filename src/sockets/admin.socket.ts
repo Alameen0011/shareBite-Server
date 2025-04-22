@@ -1,9 +1,34 @@
-import { Socket } from "socket.io";
+import { Socket, Server } from "socket.io";
+import { getIndividualSocketId } from ".";
 
-export const handleAdminSocket = ( socket: Socket) => {
+export const handleAdminSocket = ( socket: Socket, io: Server) => {
 
-    socket.on("admin",(data) => {
-        console.log("Admin Data: ",data)
+    socket.join("admin-room");
+
+    console.log("admin joined this froom admin-room")
+    socket.on("call_declined",(data) => {
+
+        const {from} = data
+
+        const targetSocketId = getIndividualSocketId(from);
+
+        if (targetSocketId) {
+          io.to(targetSocketId).emit("call_declined", {
+            message: "Busy",
+          });
+          console.log(`Notified client ${from} on socket ${targetSocketId}`);
+        } else {
+          console.log("Target client not connected");
+        }
+
+        console.log(data)
+        io.emit(data)
     })
+
+
+    socket.on("disconnect", () => {
+        console.log(`Admin disconnected from the room: admin-room`);
+        socket.leave("admin-room");
+      });
 
 }

@@ -35,15 +35,15 @@ export const registerSocketHandlers = (io: Server) => {
     // Role-based socket delegation
     switch (user.role) {
       case "volunteer":
-        handleVolunteerSockets(socket);
+        handleVolunteerSockets(socket,io);
         break;
 
       case "donor":
-        handleDonationSocket(socket);
+        handleDonationSocket(socket,io);
         break;
 
       case "admin":
-        handleAdminSocket(socket);
+        handleAdminSocket(socket,io);
         break;
 
       default:
