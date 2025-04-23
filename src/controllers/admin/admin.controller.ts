@@ -8,11 +8,7 @@ import crypto from "crypto";
 import { transporter } from "../../utils/mail";
 import { generateToken } from "../../utils/token";
 
-export const getAllUsersForAdmin = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-) => {
+export const getAllUsersForAdmin = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -20,7 +16,7 @@ export const getAllUsersForAdmin = async (
     const search = (req.query.search as string) || "";
 
     const filter: any = {
-      ...(role && role !== "all" ? { role } : {}),
+      ...(role && role !== "all" ? { role } : { role: {$ne : "admin"} }),
       ...(search && {
         $or: [
           { name: { $regex: search, $options: "i" } },
@@ -45,7 +41,7 @@ export const getAllUsersForAdmin = async (
       page,
       totalPages,
       totalUsers,
-      message: "users fetched successfully",
+      message: "fetched successfully",
     });
   } catch (error) {
     console.log("Get Users Error :", error);
@@ -53,11 +49,7 @@ export const getAllUsersForAdmin = async (
   }
 };
 
-export const toggleBlockUser = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-) => {
+export const toggleBlockUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const userId = req.params.id;
 
@@ -77,7 +69,7 @@ export const toggleBlockUser = async (
 
     res.status(200).json({
       success: true,
-      message: `User ${user.isBlocked ? "blocked" : "unblocked"} successfully`,
+      message: `Operation done successfully`,
       user: {
         _id: user._id,
         name: user.name,
@@ -136,6 +128,20 @@ export const LoginUser = async (
     next(error);
   }
 };
+
+export const logoutAdmin = async ( _req: Request,res: Response, next: NextFunction) => {
+  try {
+    res.cookie("jwt", "", {
+      httpOnly: true,
+      expires: new Date(0),
+    });
+
+    res.json({ success: true, message: "Logged out successfully!" });
+  } catch (error) {
+    next(error);
+  }
+}
+
 
 export const verifyLogin = async (
   req: Request,

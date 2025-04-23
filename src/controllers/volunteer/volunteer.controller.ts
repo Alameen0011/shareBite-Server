@@ -5,6 +5,7 @@ import { getDistanceFromLatLonInKm } from "../../utils/harvasine";
 import { generateOtp } from "../../utils/otp";
 import mongoose from "mongoose";
 import { getIndividualSocketId } from "../../sockets";
+import Kiosk from "../../models/kiosk.model";
 
 export const getAvailableDonations = async ( req: AuthRequest, res: Response, next: NextFunction) => {
 
@@ -273,52 +274,52 @@ export const nearestKiosk = async (
     const FromLat = parseFloat(lat as string);
     const FromLng = parseFloat(lng as string);
 
-    // const kiosksNearby = await Kiosk.find({
-    //   location: {
-    //     $nearSphere: {
-    //       $geometry: {
-    //         type: "Point",
-    //         coordinates: [ FromLng, FromLat,], // [longitude, latitude]
-    //       },
-    //       $maxDistance: 5000, // Maximum distance in meters (5 km)
+    const kiosksNearby = await Kiosk.find({
+      location: {
+        $nearSphere: {
+          $geometry: {
+            type: "Point",
+            coordinates: [ FromLng, FromLat,], // [longitude, latitude]
+          },
+          $maxDistance: 5000, // Maximum distance in meters (5 km)
+        },
+      },
+    }).limit(1); // Limit to the nearest kiosk only
+
+    // const kiosksNearby: Kiosk[] = [
+    //   {
+    //     _id: "60d5f5f1c4f4e3a96c1c6a7a",
+    //     name: "Kiosk A",
+    //     location: {
+    //       type: "Point",
+    //       coordinates: [76.2008, 10.5235],
     //     },
     //   },
-    // }).limit(1); // Limit to the nearest kiosk only
+    //   {
+    //     _id: "60d5f5f1c4f4e3a96c1c6a7z",
+    //     name: "Kiosk B",
+    //     location: {
+    //       type: "Point",
+    //       coordinates: [76.005, 10.005],
+    //     },
+    //   },
+    //   {
+    //     _id: "60d5f5f1c4f4e3a96c1c6a7u",
+    //     name: "Kiosk C",
+    //     location: {
+    //       type: "Point",
+    //       coordinates: [76.01, 10.01],
+    //     },
+    //   },
+    // ];
 
-    const kiosksNearby: Kiosk[] = [
-      {
-        _id: "60d5f5f1c4f4e3a96c1c6a7a",
-        name: "Kiosk A",
-        location: {
-          type: "Point",
-          coordinates: [76.2008, 10.5235],
-        },
-      },
-      {
-        _id: "60d5f5f1c4f4e3a96c1c6a7z",
-        name: "Kiosk B",
-        location: {
-          type: "Point",
-          coordinates: [76.005, 10.005],
-        },
-      },
-      {
-        _id: "60d5f5f1c4f4e3a96c1c6a7u",
-        name: "Kiosk C",
-        location: {
-          type: "Point",
-          coordinates: [76.01, 10.01],
-        },
-      },
-    ];
-
-    // if (kiosksNearby.length === 0) {
-    //   res.status(404).json({
-    //     success: false,
-    //     message: "No kiosks found nearby",
-    //   })
-    //   return;
-    // }
+    if (kiosksNearby.length === 0) {
+      res.status(404).json({
+        success: false,
+        message: "No kiosks found nearby",
+      })
+      return;
+    }
 
     const donation = await Donation.findById(id);
 

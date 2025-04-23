@@ -1,13 +1,15 @@
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Document,  Schema, Types } from "mongoose";
 
 // Kiosk interface
 interface IKiosk extends Document {
+  _id: Types.ObjectId;
   name: string;
   location: {
     type: string; // "Point"
     coordinates: [number, number];
     address: string;
   };
+  distance?:number
 }
 
 const kioskSchema = new Schema<IKiosk>({

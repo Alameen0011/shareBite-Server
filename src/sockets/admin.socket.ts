@@ -5,10 +5,9 @@ export const handleAdminSocket = ( socket: Socket, io: Server) => {
 
     socket.join("admin-room");
 
-    console.log("admin joined this froom admin-room")
     socket.on("call_declined",(data) => {
 
-        const {from} = data
+        const { from } = data
 
         const targetSocketId = getIndividualSocketId(from);
 
@@ -20,9 +19,6 @@ export const handleAdminSocket = ( socket: Socket, io: Server) => {
         } else {
           console.log("Target client not connected");
         }
-
-        console.log(data)
-        io.emit(data)
     })
 
 

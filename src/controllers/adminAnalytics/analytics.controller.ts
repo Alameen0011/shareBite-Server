@@ -52,3 +52,81 @@ export const getTotalDonations = async (_req: AuthRequest, res: Response) => {
         trend
      });
   };
+
+
+  export const getTopDonors = async (_req: AuthRequest, res: Response) => {
+
+   const topDonors = await Donation.aggregate([
+    { $match: { status: "delivered_to_kiosk" } },
+    {
+      $group: {
+        _id: "$donor",
+        donationsCount: { $sum: 1 }
+      }
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "_id",
+        foreignField: "_id",
+        as: "donorInfo"
+      }
+    },
+    { $unwind: "$donorInfo" },
+    {
+      $project: {
+        name: "$donorInfo.name",
+        donationsCount: 1
+      }
+    },
+    { $sort: { donationsCount: -1 } },
+    { $limit: 5 }
+  ])
+
+    res.status(200).json({
+      success:true,
+      topDonors
+    })
+
+
+
+
+  }
+
+
+  export const getTopVolunteers = async (_req: AuthRequest, res: Response) => {
+    
+    const topVolunteers = await Donation.aggregate([
+      { $match: { status: "delivered_to_kiosk" } },
+      {
+        $group: {
+          _id: "$volunteer",
+          pickupsCount: { $sum: 1 }
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "volunteerInfo"
+        }
+      },
+      { $unwind: "$volunteerInfo" },
+      {
+        $project: {
+          name: "$volunteerInfo.name",
+          pickupsCount: 1
+        }
+      },
+      { $sort: { pickupsCount: -1 } },
+      { $limit: 5 }
+
+    ])
+
+      res.status(200).json({
+        success:true,
+        topVolunteers,
+      })
+
+  }

@@ -8,6 +8,7 @@ const router = express.Router()
 // Admin Auth 
 router.post("/login",AdminController.LoginUser)
 router.post("/verify-login",AdminController.verifyLogin)
+router.post("/logout",AdminController.logoutAdmin)
 
 // User Management
 router.get("/users",protect,authorizeRoles("admin"),AdminController.getAllUsersForAdmin)
@@ -35,6 +36,9 @@ router.get('/totalDonors', protect,authorizeRoles("admin"),AdminAnalyticsControl
 router.get('/totalKiosks',protect,authorizeRoles("admin"), AdminAnalyticsController.getTotalKiosks);
 router.get('/donationTrend',protect,authorizeRoles("admin"),AdminAnalyticsController.getDonationTrend);
 
+//top-5 donor/volunteer
+router.get("/top-donors",protect,authorizeRoles("admin"),AdminAnalyticsController.getTopDonors)
+router.get("/top-volunteers",protect,authorizeRoles("admin"),AdminAnalyticsController.getTopVolunteers)
 
 
 export default router

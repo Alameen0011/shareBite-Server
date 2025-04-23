@@ -5,10 +5,10 @@ import { editKioskSchema, kioskSchema } from "../../validations/KioskSchema";
 
 export const addKiosk = async (req: AuthRequest,res: Response, next: NextFunction) => {
     try {
-      console.log("inside add kiosk")
+ 
 
         const validatedData = kioskSchema.parse(req.body)
-        console.log(validatedData,"data after body zod validation")
+
         const { name, location } = validatedData
 
         const newKiosk = new Kiosk({
@@ -19,9 +19,6 @@ export const addKiosk = async (req: AuthRequest,res: Response, next: NextFunctio
                 address: location.address
             },
         });
-
-        console.log(newKiosk,"nwe kiosk save to db")
-
 
         await newKiosk.save();
 
@@ -75,7 +72,15 @@ export const getAllKiosks = async (req: AuthRequest,res: Response, next: NextFun
     try {
         const page = parseInt(req.query.page as string)  || 1
         const limit = parseInt(req.query.limit as string) || 10
+        const search = (req.query.search as string) || "";
 
+        const filter: any = {
+          ...(search && {
+            $or: [
+              { name: { $regex: search, $options: "i" } },
+            ],
+          }),
+        }
 
         const skip = (page - 1) * limit
         const totalKiosks = await Kiosk.countDocuments()
@@ -89,7 +94,7 @@ export const getAllKiosks = async (req: AuthRequest,res: Response, next: NextFun
 
 
         
-        const kiosks = await Kiosk.find()
+        const kiosks = await Kiosk.find(filter)
                                     .skip(skip)
                                     .sort({createdAt: -1})
                                     .limit(limit)

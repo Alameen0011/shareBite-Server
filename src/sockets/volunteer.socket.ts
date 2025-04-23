@@ -47,7 +47,6 @@ export const handleVolunteerSockets = (socket: Socket, io:Server) => {
       
         // Forward to admin-room
         io.to("admin-room").emit("call_Request", data);
-
         
     })
    
