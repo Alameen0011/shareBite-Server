@@ -5,11 +5,7 @@ import { getIndividualSocketId } from "../../sockets";
 import User from "../../models/user.model";
 import mongoose from "mongoose";
 
-export const getMessages = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-) => {
+export const getMessages = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
     const { id: UserToChatId } = req.params;
@@ -42,11 +38,7 @@ export const getMessages = async (
   }
 };
 
-export const sendMessage = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-) => {
+export const sendMessage = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const io = req.app.get("io");
     const senderId = req.user?.id;
@@ -67,12 +59,9 @@ export const sendMessage = async (
       text,
     });
 
-    console.log(newMessage, "Got the message Send")
 
     //realtime feature one to one messaging -one user posted a message and we will make the other guy aware of it at realtime
     const socketId = getIndividualSocketId(receiverId);
-
-    console.log(socketId,"Sockeet IDD Message Send realtime ++++++++++++++++ ")
 
     if (socketId) io.to(socketId).emit("newMessage", newMessage);
 
@@ -88,13 +77,9 @@ export const sendMessage = async (
 };
 
 export const getUsersWhoMessagedAdmin =  async ( req: AuthRequest,res: Response, next: NextFunction) => {
-  console.log("I am inisde the controller of get users messaged admin")
+  
   try {
     const adminId = req.user?.id
-
-    console.log("Inside get Users who messaged admin ===============", adminId)
-
-    console.log("adminId passed to query:", adminId, typeof adminId);
 
     const adminObjectId = new mongoose.Types.ObjectId(adminId);
 
@@ -108,7 +93,6 @@ export const getUsersWhoMessagedAdmin =  async ( req: AuthRequest,res: Response,
       .select('senderId receiverId')
       .lean()
 
-      console.log(messages,"message, user ---> admin")
 
 
      // Step 2: Collect all unique user IDs who interacted with the admin

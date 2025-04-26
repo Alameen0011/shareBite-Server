@@ -5,6 +5,7 @@ export const handleAdminSocket = ( socket: Socket, io: Server) => {
 
     socket.join("admin-room");
 
+
     socket.on("call_declined",(data) => {
 
         const { from } = data
@@ -15,7 +16,7 @@ export const handleAdminSocket = ( socket: Socket, io: Server) => {
           io.to(targetSocketId).emit("call_declined", {
             message: "Busy",
           });
-          console.log(`Notified client ${from} on socket ${targetSocketId}`);
+
         } else {
           console.log("Target client not connected");
         }

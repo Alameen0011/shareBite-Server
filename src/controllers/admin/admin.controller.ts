@@ -84,11 +84,7 @@ export const toggleBlockUser = async (req: AuthRequest, res: Response, next: Nex
   }
 };
 
-export const LoginUser = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const LoginAdmin = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const validatedData = loginSchema.parse(req.body);
 
@@ -103,6 +99,9 @@ export const LoginUser = async (
       });
       return;
     }
+     //ensures only the latest login link is usable.
+     await MagicToken.deleteMany({ email: existingUser.email });
+
     const magicToken = crypto.randomBytes(32).toString("hex");
 
     // Save token in DB (expire in 15 minutes)
@@ -120,10 +119,32 @@ export const LoginUser = async (
       from: config.EMAIL_APP,
       to: email,
       subject: "Your Magic Login Link",
-      html: `<p>Click <a href="${magicLink}">here</a> to log in.</p>`,
+      html:  `
+      <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+     <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; padding: 30px; box-shadow: 0 0 10px rgba(0,0,0,0.05);">
+       <h2 style="color: #333333;">Welcome to ShareBite! 🍽️</h2>
+       <p style="font-size: 16px; color: #555;">
+         We're glad you're here. To complete your login, please click the button below:
+       </p>
+       <div style="text-align: center; margin: 30px 0;">
+         <a href="${magicLink}" 
+            style="background-color: #4CAF50; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 16px;">
+           Log in to your account
+         </a>
+       </div>
+       <p style="font-size: 14px; color: #888;">
+         This link will expire in 15 minutes. If you didn’t request this, please ignore this email.
+       </p>
+       <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+       <p style="font-size: 12px; color: #aaa; text-align: center;">
+         &copy; ${new Date().getFullYear()} ShareBite. All rights reserved.
+       </p>
+     </div>
+   </div>
+     `,
     });
 
-    res.json({ success: true, message: "please check you email!" });
+    res.status(200).json({ success: true, message: "please check you email!" });
   } catch (error) {
     next(error);
   }
@@ -142,19 +163,14 @@ export const logoutAdmin = async ( _req: Request,res: Response, next: NextFuncti
   }
 }
 
-
-export const verifyLogin = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
+export const verifyLogin = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { token } = req.query
 
     const magicToken = await MagicToken.findOne({ token });
 
     if (!magicToken) {
-      res.status(401).json({
+      res.status(400).json({
         success: false,
         message: "Invalid or expired magic link",
       });
@@ -163,14 +179,14 @@ export const verifyLogin = async (
 
     if (magicToken!.expiresAt < new Date()) {
       await MagicToken.deleteOne({ token });
-      res.status(401).json({
+      res.status(400).json({
         success: false,
         message: "Magic token expired",
       });
       return;
     }
 
-    const email = magicToken?.email;
+    const { email } = magicToken
 
     if (!email) {
       res.status(400).json({ success: false, message: "Invalid token data" });

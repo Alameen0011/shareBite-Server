@@ -31,6 +31,8 @@ const kioskSchema = new Schema<IKiosk>({
   },
 });
 
+kioskSchema.index({ location: "2dsphere" });
+
 const Kiosk = mongoose.model<IKiosk>("Kiosk", kioskSchema);
 
 export default Kiosk;

@@ -7,6 +7,16 @@ import mongoose from "mongoose";
 import { getIndividualSocketId } from "../../sockets";
 import Kiosk from "../../models/kiosk.model";
 
+interface Kiosk {
+  _id: string;
+  name: string;
+  location: {
+    type: string;
+    coordinates: [number, number]; // [longitude, latitude]
+  };
+  distance?: number; 
+}
+
 export const getAvailableDonations = async ( req: AuthRequest, res: Response, next: NextFunction) => {
 
   try {
@@ -55,8 +65,6 @@ export const claimDonation = async ( req: AuthRequest, res: Response, next: Next
     const donationId = req.params.id;
     const volunteerId = req.user?.id;
 
-    console.log(donationId, "donation IDDD");
-    console.log(volunteerId, "volunteer IDdd");
 
     // Atomic update (avoids race conditions)
     const donation = await Donation.findOneAndUpdate(
@@ -102,27 +110,20 @@ export const claimDonation = async ( req: AuthRequest, res: Response, next: Next
   }
 };
 
-export const verifyAndPickup = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-) => {
+export const verifyAndPickup = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    console.log("reqbody:", req.body);
+
     const io = req.app.get("io")
     const donationId = req.params.id;
     const volunteerId = req.user?.id;
     const { otp } = req.body;
 
-    console.log("inside verify and pickup");
-    console.log(donationId, "donation IDDD");
-    console.log(volunteerId, "volunteer IDdd");
-    console.log(otp, "::: OTP");
+
 
     const donation = await Donation.findById(donationId);
 
     if (!donation) {
-      res.status(404).json({ success: false, message: "Donation not found" });
+      res.status(400).json({ success: false, message: "Donation not found" });
       return;
     }
 
@@ -134,7 +135,7 @@ export const verifyAndPickup = async (
     }
 
     if (donation.otp !== otp) {
-      res.status(401).json({ success: false, message: "Invalid OTP" });
+      res.status(400).json({ success: false, message: "Invalid OTP" });
       return;
     }
 
@@ -160,8 +161,7 @@ export const verifyAndPickup = async (
 
     //realtime feature - toast to donor on pickup
     const socketId = getIndividualSocketId(donation.donor.toString())
-    console.log(socketId,"Sockeet IDD  =====++++socket of doations pickedup")
-    console.log(`Emitting 'donationPickedUp' to donor: ${donation.donor.toString()}`);
+
     if(socketId) io.to(socketId).emit("donationPickedUp", { donationId, volunteerId });
 
     res.status(200).json({
@@ -174,40 +174,29 @@ export const verifyAndPickup = async (
   }
 };
 
-export const verifyAndDeliver = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-) => {
+export const verifyAndDeliver = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const io = req.app.get("io")
     const donationId = req.params.id;
     const volunteerId = req.user?.id;
     const { otp } = req.body;
 
-    console.log("inside verify and deliver");
-    console.log(donationId, "donation IDDD");
-    console.log(volunteerId, "volunteer IDdd");
-    console.log(otp, "::: OTP");
 
     const donation = await Donation.findById(donationId);
 
-    console.log(donation,"donation")
 
     if (!donation) {
-      res.status(404).json({ success: false, message: "Donation not found" });
+      res.status(400).json({ success: false, message: "Donation not found" });
       return;
     }
 
     if (donation.deliveryOtpUsed) {
-      res
-        .status(400)
-        .json({ success: false, message: "OTP has already been used" });
+      res.status(400).json({ success: false, message: "OTP has already been used" });
       return;
     }
 
     if (donation.deliveryOtp !== otp) {
-      res.status(401).json({ success: false, message: "Invalid OTP" });
+      res.status(400).json({ success: false, message: "Invalid OTP" });
       return;
     }
 
@@ -228,7 +217,6 @@ export const verifyAndDeliver = async (
      //realtime feature - toast to donor on delivery
     const socketId = getIndividualSocketId(donation.donor.toString())
  
-    console.log(socketId,"Sockeet IDD  =====++++socket of doations delivver")
     if(socketId) io.to(socketId).emit("donationDelivery", { donationId, volunteerId });
 
 
@@ -244,21 +232,7 @@ export const verifyAndDeliver = async (
   }
 };
 
-interface Kiosk {
-  _id: string;
-  name: string;
-  location: {
-    type: string;
-    coordinates: [number, number]; // [longitude, latitude]
-  };
-  distance?: number; // Optional distance property to store the calculated distance
-}
-
-export const nearestKiosk = async (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-) => {
+export const nearestKiosk = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const { lat, lng } = req.query;
     const { id } = req.params;
@@ -274,6 +248,7 @@ export const nearestKiosk = async (
     const FromLat = parseFloat(lat as string);
     const FromLng = parseFloat(lng as string);
 
+
     const kiosksNearby = await Kiosk.find({
       location: {
         $nearSphere: {
@@ -284,34 +259,8 @@ export const nearestKiosk = async (
           $maxDistance: 5000, // Maximum distance in meters (5 km)
         },
       },
-    }).limit(1); // Limit to the nearest kiosk only
+    }).limit(1)
 
-    // const kiosksNearby: Kiosk[] = [
-    //   {
-    //     _id: "60d5f5f1c4f4e3a96c1c6a7a",
-    //     name: "Kiosk A",
-    //     location: {
-    //       type: "Point",
-    //       coordinates: [76.2008, 10.5235],
-    //     },
-    //   },
-    //   {
-    //     _id: "60d5f5f1c4f4e3a96c1c6a7z",
-    //     name: "Kiosk B",
-    //     location: {
-    //       type: "Point",
-    //       coordinates: [76.005, 10.005],
-    //     },
-    //   },
-    //   {
-    //     _id: "60d5f5f1c4f4e3a96c1c6a7u",
-    //     name: "Kiosk C",
-    //     location: {
-    //       type: "Point",
-    //       coordinates: [76.01, 10.01],
-    //     },
-    //   },
-    // ];
 
     if (kiosksNearby.length === 0) {
       res.status(404).json({
@@ -328,25 +277,21 @@ export const nearestKiosk = async (
      return ;
     }
 
-    // Calculate the distance and sort kiosks by distance in ascending order
-    kiosksNearby.forEach((kiosk) => {
-      kiosk.distance = getDistanceFromLatLonInKm(
-        FromLat,
-        FromLng,
-        kiosk.location.coordinates[1],
-        kiosk.location.coordinates[0]
-      );
-    });
-
-    // Sort kiosks by the distance in ascending order
-    kiosksNearby.sort((a, b) => a.distance! - b.distance!);
 
     const nearestKiosk = kiosksNearby[0];
-    const distance = nearestKiosk.distance!.toFixed(2);
+    const distance = getDistanceFromLatLonInKm(
+      FromLat,
+      FromLng,
+      nearestKiosk.location.coordinates[1],
+      nearestKiosk.location.coordinates[0]
+    ).toFixed(2);
 
     donation.kiosk = new mongoose.Types.ObjectId(nearestKiosk._id);
-    donation.deliveryOtp = generateOtp(6);
+    if(!donation.deliveryOtp){
+      donation.deliveryOtp = generateOtp(6);
+    }
     await donation.save();
+    
 
     res.status(200).json({
       success: true,
@@ -354,7 +299,7 @@ export const nearestKiosk = async (
       distance,
     });
   } catch (error) {
-    console.error("Kios Error:", error);
+    console.error("Kiosk Error:", error);
     next(error);
   }
 };

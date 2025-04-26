@@ -6,7 +6,7 @@ import { authorizeRoles, protect } from "../middlewares/authMiddleware"
 const router = express.Router()
 
 // Admin Auth 
-router.post("/login",AdminController.LoginUser)
+router.post("/login",AdminController.LoginAdmin)
 router.post("/verify-login",AdminController.verifyLogin)
 router.post("/logout",AdminController.logoutAdmin)
 
@@ -29,16 +29,8 @@ router.get("/message",protect,authorizeRoles("admin","volunteer","donor"),Messag
 router.post("/message/send/:id",protect,authorizeRoles("admin","volunteer","donor"),MessageController.sendMessage)
 
 
-//Admin-dashboard api's
-router.get('/totalDonations',protect,authorizeRoles("admin"), AdminAnalyticsController.getTotalDonations);
-router.get('/totalVolunteers',protect,authorizeRoles("admin"), AdminAnalyticsController.getTotalVolunteers);
-router.get('/totalDonors', protect,authorizeRoles("admin"),AdminAnalyticsController.getTotalDonors);
-router.get('/totalKiosks',protect,authorizeRoles("admin"), AdminAnalyticsController.getTotalKiosks);
-router.get('/donationTrend',protect,authorizeRoles("admin"),AdminAnalyticsController.getDonationTrend);
-
-//top-5 donor/volunteer
-router.get("/top-donors",protect,authorizeRoles("admin"),AdminAnalyticsController.getTopDonors)
-router.get("/top-volunteers",protect,authorizeRoles("admin"),AdminAnalyticsController.getTopVolunteers)
+//Admin - dashboard overView -- combining the dashboard api for better future,
+router.get("/dashboard-overview",protect,authorizeRoles("admin"),AdminAnalyticsController.getAdminDashboardOverview)
 
 
 export default router

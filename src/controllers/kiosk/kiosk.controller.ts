@@ -37,14 +37,13 @@ export const addKiosk = async (req: AuthRequest,res: Response, next: NextFunctio
     }
 }
 
-
 export const getSingleKiosk = async (req: AuthRequest,res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
         
                 const kiosk = await Kiosk.findById(id)
         
-                console.log(kiosk,"Kiosk")
+
         
                 if(!kiosk){
                     res.status(404).json({
@@ -85,14 +84,6 @@ export const getAllKiosks = async (req: AuthRequest,res: Response, next: NextFun
         const skip = (page - 1) * limit
         const totalKiosks = await Kiosk.countDocuments()
         const totalPages = Math.ceil(totalKiosks/limit)
-
-        console.log(page,"Page")
-        console.log(limit,"limit")
-        console.log(skip,"skip")
-        console.log(totalPages,"totalPages")
-
-
-
         
         const kiosks = await Kiosk.find(filter)
                                     .skip(skip)

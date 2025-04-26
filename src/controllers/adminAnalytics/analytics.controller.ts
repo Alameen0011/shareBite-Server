@@ -4,39 +4,16 @@ import Kiosk from "../../models/kiosk.model";
 import User from "../../models/user.model";
 import { Response } from "express";
 
-export const getTotalDonations = async (_req: AuthRequest, res: Response) => {
-    const count = await Donation.countDocuments();
-    res.status(200).json({
-        success:true,
-        total: count
-     });
-  };
-  
-  export const getTotalVolunteers = async  (_req: AuthRequest, res: Response) => {
-    const count = await User.countDocuments({ role: 'volunteer' });
-    res.status(200).json({
-        success:true,
-        total: count
-     });
-  };
-  
-  export const getTotalDonors = async  (_req: AuthRequest, res: Response) => {
-    const count = await User.countDocuments({ role: 'donor' });
-    res.status(200).json({
-        success:true,
-        total: count
-     });
-  };
-  
-  export const getTotalKiosks = async (_req: AuthRequest, res: Response) => {
-    const count = await Kiosk.countDocuments();
-    res.status(200).json({
-        success:true,
-        total: count
-     });
-  };
-  
-  export const getDonationTrend = async (_req: AuthRequest, res: Response) => {
+
+
+
+
+export const getAdminDashboardOverview = async (_req:AuthRequest,res:Response) => {
+
+    const totalDonations = await Donation.countDocuments();
+    const totalVolunteers = await User.countDocuments({ role: 'volunteer' });
+    const totalDonors = await User.countDocuments({ role: 'donor' });
+    const totalKiosks = await Kiosk.countDocuments();
     const trend = await Donation.aggregate([
       {
         $group: {
@@ -46,56 +23,34 @@ export const getTotalDonations = async (_req: AuthRequest, res: Response) => {
       },
       { $sort: { _id: 1 } },
     ]);
-  
-    res.status(200).json({
-        success:true,
-        trend
-     });
-  };
 
+    const topDonors = await Donation.aggregate([
+      { $match: { status: "delivered_to_kiosk" } },
+      {
+        $group: {
+          _id: "$donor",
+          donationsCount: { $sum: 1 }
+        }
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "_id",
+          foreignField: "_id",
+          as: "donorInfo"
+        }
+      },
+      { $unwind: "$donorInfo" },
+      {
+        $project: {
+          name: "$donorInfo.name",
+          donationsCount: 1
+        }
+      },
+      { $sort: { donationsCount: -1 } },
+      { $limit: 5 }
+    ])
 
-  export const getTopDonors = async (_req: AuthRequest, res: Response) => {
-
-   const topDonors = await Donation.aggregate([
-    { $match: { status: "delivered_to_kiosk" } },
-    {
-      $group: {
-        _id: "$donor",
-        donationsCount: { $sum: 1 }
-      }
-    },
-    {
-      $lookup: {
-        from: "users",
-        localField: "_id",
-        foreignField: "_id",
-        as: "donorInfo"
-      }
-    },
-    { $unwind: "$donorInfo" },
-    {
-      $project: {
-        name: "$donorInfo.name",
-        donationsCount: 1
-      }
-    },
-    { $sort: { donationsCount: -1 } },
-    { $limit: 5 }
-  ])
-
-    res.status(200).json({
-      success:true,
-      topDonors
-    })
-
-
-
-
-  }
-
-
-  export const getTopVolunteers = async (_req: AuthRequest, res: Response) => {
-    
     const topVolunteers = await Donation.aggregate([
       { $match: { status: "delivered_to_kiosk" } },
       {
@@ -124,9 +79,18 @@ export const getTotalDonations = async (_req: AuthRequest, res: Response) => {
 
     ])
 
-      res.status(200).json({
-        success:true,
-        topVolunteers,
-      })
+
+    res.status(200).json({
+      success:true,
+      totalDonations,
+      totalVolunteers,
+      totalDonors,
+      totalKiosks,
+      topDonors,
+      topVolunteers,
+      trend
+
+    })
 
   }
+

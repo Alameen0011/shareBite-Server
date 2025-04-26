@@ -36,7 +36,6 @@ export const zegoToken = (req: Request, res: Response, next: NextFunction) => {
   
       const token = generateToken04(Number(appID),userID,secret,effectiveTimeInSeconds,payload);
 
-      console.log(token,"Tokengenerated KIT TOKEN++++++++++++++")
 
       res.json({ token });
     } catch (error) {
