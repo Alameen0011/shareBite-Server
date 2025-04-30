@@ -3,6 +3,8 @@ import { NextFunction, Response } from "express"
 import Donation from "../../models/donation.model"
 import { donationSchema, updateDonationSchema } from "../../validations/donationSchema";
 import { notifyNearbyVolunteers } from "../../sockets/volunteer.socket";
+import User from "../../models/user.model";
+import Kiosk from "../../models/kiosk.model";
 
 
 
@@ -14,12 +16,9 @@ export const createDonation = async (req: AuthRequest,res: Response, next: NextF
         const validatedData = donationSchema.parse(req.body)
 
 
-
-        console.log(validatedData,"data came to backend")
-
         const { title, type, quantity, expiry, pickupLocation, image } = validatedData
 
-        const donor = req?.user?.id || "67dbc162c75856aee64a2224"
+        const donor = req?.user?.id 
 
         if(!image){
             res.status(400).json({
@@ -58,12 +57,22 @@ export const createDonation = async (req: AuthRequest,res: Response, next: NextF
         
     }
 }
+
 export const getDonations =async (req: AuthRequest,res: Response, next: NextFunction) => {
     try {
         
         const donor = req?.user?.id 
-        console.log("finded the donor ::", donor)
         const {status,type} = req.query;
+
+        const donorProfile = await User.findById(donor);
+        if (!donorProfile || !donorProfile.name || !donorProfile.email || !donorProfile.phone) {
+            res.status(400).json({
+                success: false,
+                message: "Please complete your profile before making donations"
+            });
+            return;
+        }
+
 
         
         let filter: any = {};
@@ -72,25 +81,21 @@ export const getDonations =async (req: AuthRequest,res: Response, next: NextFunc
         if(status) filter.status = status
         if(type) filter.type = type
 
-        console.log(filter,":: filters")
-
 
        
-        const donations = await Donation.find(filter)
-        .populate("donor","name email")
-        // .populate("volunteer","name email")
-        // .populate("kiosk","name email")
-        .sort({ createdAt: -1 })
+           // Start the donation query with basic population for donor
+           const donations =await Donation.find(filter)
+           .populate("donor", "name email phone")
+           .sort({ createdAt: -1 })
 
-        console.log(donations,":: donations queryied")
 
-        if(!donations){
-            res.status(404).json({
-                success:false,
-                message:"No donation matched your filter"
-            })
-            return;
-        }
+       if (!donations) {
+         res.status(404).json({
+            success: false,
+            message: "No donation matched your filter"
+        });
+        return;
+    }
 
         res.status(200).json({
             success:true,
@@ -104,24 +109,43 @@ export const getDonations =async (req: AuthRequest,res: Response, next: NextFunc
         
     }
 }
+
 export const getSingleDonation = async (req: AuthRequest,res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
 
 
+        // Fetch the donation by ID without populating initially
         const donation = await Donation.findById(id)
-        .populate("donor","name email")
-        // .populate("volunteer","name email")
-        // .populate("kiosk","name location");
+            .populate("donor", "name email phone");
 
-        console.log(donation)
 
-        if(!donation){
-            res.status(404).json({
-                success:false,
+        if (!donation) {
+             res.status(404).json({
+                success: false,
                 message: "Donation not found"
-            })
+            });
             return;
+        }
+
+
+
+        // Conditionally populate volunteer if the data is valid
+        if (donation.volunteer) {
+            const volunteer = await User.findById(donation.volunteer);
+            if (volunteer && volunteer.name && volunteer.email && volunteer.phone) {
+                await donation.populate("volunteer", "name email phone");
+            }
+        }
+
+        // Conditionally populate kiosk if the data is valid
+        if (donation.kiosk) {
+   
+            const kiosk = await Kiosk.findById(donation.kiosk);
+       
+            if (kiosk && kiosk.name && kiosk.location) {
+                await donation.populate("kiosk", "name location");
+            }
         }
 
         res.status(200).json({
@@ -136,15 +160,13 @@ export const getSingleDonation = async (req: AuthRequest,res: Response, next: Ne
         
     }
 }
+
 export const updateDonation = async (req: AuthRequest,res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
 
 
-        console.log(req.body)
-
         const validatedUpdates = updateDonationSchema.parse(req.body);
-        console.log(validatedUpdates,":: DATA")
 
         const donation = await Donation.findOne({ _id:id,donor:req.user?.id  })
 
@@ -198,6 +220,7 @@ export const updateDonation = async (req: AuthRequest,res: Response, next: NextF
         
     }
 }
+
 export const deleteDonation = async (req: AuthRequest,res: Response, next: NextFunction) => {
     try {
 
