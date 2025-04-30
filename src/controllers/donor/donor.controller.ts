@@ -1,5 +1,4 @@
-import { AuthRequest } from "../../interfaces/auth"
-import { NextFunction, Response } from "express"
+import { NextFunction, Response, Request } from "express"
 import Donation from "../../models/donation.model"
 import { donationSchema, updateDonationSchema } from "../../validations/donationSchema";
 import { notifyNearbyVolunteers } from "../../sockets/volunteer.socket";
@@ -8,9 +7,11 @@ import Kiosk from "../../models/kiosk.model";
 
 
 
-export const createDonation = async (req: AuthRequest,res: Response, next: NextFunction) => {
+export const createDonation = async (req: Request,res: Response, next: NextFunction) => {
     try {
         const io = req.app.get("io")
+
+        
 
 
         const validatedData = donationSchema.parse(req.body)
@@ -58,9 +59,11 @@ export const createDonation = async (req: AuthRequest,res: Response, next: NextF
     }
 }
 
-export const getDonations =async (req: AuthRequest,res: Response, next: NextFunction) => {
+export const getDonations =async (req: Request,res: Response, next: NextFunction) => {
     try {
         
+        console.log(req.user,"RELEFJLJEWOJIO Got the fukcing id")
+
         const donor = req?.user?.id 
         const {status,type} = req.query;
 
@@ -110,7 +113,7 @@ export const getDonations =async (req: AuthRequest,res: Response, next: NextFunc
     }
 }
 
-export const getSingleDonation = async (req: AuthRequest,res: Response, next: NextFunction) => {
+export const getSingleDonation = async (req: Request,res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
 
@@ -161,7 +164,7 @@ export const getSingleDonation = async (req: AuthRequest,res: Response, next: Ne
     }
 }
 
-export const updateDonation = async (req: AuthRequest,res: Response, next: NextFunction) => {
+export const updateDonation = async (req: Request,res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
 
@@ -221,7 +224,7 @@ export const updateDonation = async (req: AuthRequest,res: Response, next: NextF
     }
 }
 
-export const deleteDonation = async (req: AuthRequest,res: Response, next: NextFunction) => {
+export const deleteDonation = async (req: Request,res: Response, next: NextFunction) => {
     try {
 
         const { id } = req.params

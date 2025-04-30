@@ -1,5 +1,4 @@
-import { NextFunction, Response } from "express";
-import { AuthRequest } from "../../interfaces/auth";
+import { NextFunction, Response, Request } from "express";
 import Donation from "../../models/donation.model";
 import { getDistanceFromLatLonInKm } from "../../utils/harvasine";
 import { generateOtp } from "../../utils/otp";
@@ -18,7 +17,7 @@ interface Kiosk {
 }
 
 export const getAvailableDonations = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -62,7 +61,7 @@ export const getAvailableDonations = async (
 };
 
 export const claimDonation = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -119,7 +118,7 @@ export const claimDonation = async (
 };
 
 export const verifyAndPickup = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -193,7 +192,7 @@ export const verifyAndPickup = async (
 };
 
 export const verifyAndDeliver = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {
@@ -267,7 +266,7 @@ export const verifyAndDeliver = async (
 };
 
 export const nearestKiosk = async (
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {

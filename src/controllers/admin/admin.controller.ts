@@ -1,4 +1,3 @@
-import { AuthRequest } from "../../interfaces/auth";
 import { NextFunction, Response,Request } from "express";
 import User from "../../models/user.model";
 import { loginSchema } from "../../validations/authSchema";
@@ -8,7 +7,7 @@ import crypto from "crypto";
 import { transporter } from "../../utils/mail";
 import { generateToken } from "../../utils/token";
 
-export const getAllUsersForAdmin = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getAllUsersForAdmin = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 10;
@@ -49,9 +48,11 @@ export const getAllUsersForAdmin = async (req: AuthRequest, res: Response, next:
   }
 };
 
-export const toggleBlockUser = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const toggleBlockUser = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.params.id;
+
+    console.log(userId,"userid")
 
     const user = await User.findById(userId);
 

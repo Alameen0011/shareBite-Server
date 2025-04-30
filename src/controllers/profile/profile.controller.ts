@@ -1,8 +1,7 @@
-import { AuthRequest } from "../../interfaces/auth"
-import { NextFunction, Response } from "express"
+import { NextFunction, Response, Request } from "express"
 import User from "../../models/user.model";
 
-export const updateProfile = async (req: AuthRequest,res: Response, next: NextFunction) => {
+export const updateProfile = async (req: Request,res: Response, next: NextFunction) => {
     const userId = req.user?.id
     const {name, phone, address} = req.body
      try {
@@ -30,7 +29,7 @@ export const updateProfile = async (req: AuthRequest,res: Response, next: NextFu
 
 }
 
-export const getProfile = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getProfile = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const userId = req.user?.id
 

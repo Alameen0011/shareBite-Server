@@ -1,4 +1,3 @@
-import { Request } from "express";
 import  { Document } from "mongoose";
 
 
@@ -9,9 +8,6 @@ export interface DecodedToken {
     exp: number;
   }
 
-export interface AuthRequest extends Request {
-    user?: { id: string, role: string };
-}
 
 export interface IMagicToken extends Document {
     email: string;

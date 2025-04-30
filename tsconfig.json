@@ -16,7 +16,9 @@
     "noUnusedLocals": true,     // Warns about unused variables
     "noUnusedParameters": true, // Warns about unused function parameters
     "noFallthroughCasesInSwitch": true, // Prevents unintentional fallthrough in switch
-    "noEmitOnError": true       // Prevents emitting files if there are TypeScript errors
+    "noEmitOnError": true,       // Prevents emitting files if there are TypeScript errors
+    "typeRoots": ["./node_modules/@types", "./types"],
+    "types": ["node", "express"]
   },
   "include": ["src"],   // Only compile files inside `src/`
   "exclude": ["node_modules", "dist"] // Don't compile dependencies or build output

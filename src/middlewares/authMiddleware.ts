@@ -1,11 +1,20 @@
 import config from "../config/env"
-import { Response, NextFunction  } from "express";
+import {Request, Response, NextFunction  } from "express";
 import jwt from "jsonwebtoken";
-import { AuthRequest , DecodedToken } from "../interfaces/auth";
+import { DecodedToken } from "../interfaces/auth";
 
 
 
-export const protect  = async (req: AuthRequest , res: Response, next: NextFunction) => {
+declare module 'express' {
+    interface Request {
+      user?: {
+        id:string,
+        role:string
+      };
+    }
+  }
+
+export const protect  = async (req:Request, res: Response, next: NextFunction) => {
     console.log("inside protect middleware")
     let token: string | undefined;
 
@@ -39,7 +48,9 @@ export const protect  = async (req: AuthRequest , res: Response, next: NextFunct
 }
 
 export const authorizeRoles = (...allowedRoles:string[]) => {
-    return (req: AuthRequest,res: Response, next: NextFunction) => {
+    return (req: Request,res: Response, next: NextFunction) => {
+        console.log(req.user,"reqUser from Request")
+
         if(!req.user){
             res.status(401).json({
                 success:false,

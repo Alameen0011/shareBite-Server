@@ -1,14 +1,13 @@
-import { AuthRequest  } from "../../interfaces/auth";
 import Donation from "../../models/donation.model";
 import Kiosk from "../../models/kiosk.model";
 import User from "../../models/user.model";
-import { Response } from "express";
+import { Response,Request } from "express";
 
 
 
 
 
-export const getAdminDashboardOverview = async (_req:AuthRequest,res:Response) => {
+export const getAdminDashboardOverview = async (_req:Request,res:Response) => {
 
     const totalDonations = await Donation.countDocuments();
     const totalVolunteers = await User.countDocuments({ role: 'volunteer' });

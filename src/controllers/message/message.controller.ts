@@ -1,11 +1,10 @@
-import { NextFunction, Response } from "express";
-import { AuthRequest } from "../../interfaces/auth";
+import { NextFunction, Response, Request } from "express";
 import { Message } from "../../models/message.model";
 import { getIndividualSocketId } from "../../sockets";
 import User from "../../models/user.model";
 import mongoose from "mongoose";
 
-export const getMessages = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const getMessages = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const userId = req.user?.id;
     const { id: UserToChatId } = req.params;
@@ -38,7 +37,7 @@ export const getMessages = async (req: AuthRequest, res: Response, next: NextFun
   }
 };
 
-export const sendMessage = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const sendMessage = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const io = req.app.get("io");
     const senderId = req.user?.id;
@@ -76,7 +75,7 @@ export const sendMessage = async (req: AuthRequest, res: Response, next: NextFun
   }
 };
 
-export const getUsersWhoMessagedAdmin =  async ( req: AuthRequest,res: Response, next: NextFunction) => {
+export const getUsersWhoMessagedAdmin =  async ( req: Request,res: Response, next: NextFunction) => {
   
   try {
     const adminId = req.user?.id

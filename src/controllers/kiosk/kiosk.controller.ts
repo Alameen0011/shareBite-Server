@@ -1,9 +1,8 @@
 import Kiosk from "../../models/kiosk.model";
-import { AuthRequest } from "../../interfaces/auth"
-import { NextFunction, Response } from "express"
+import { NextFunction, Response, Request } from "express"
 import { editKioskSchema, kioskSchema } from "../../validations/KioskSchema";
 
-export const addKiosk = async (req: AuthRequest,res: Response, next: NextFunction) => {
+export const addKiosk = async (req: Request,res: Response, next: NextFunction) => {
     try {
  
 
@@ -37,7 +36,7 @@ export const addKiosk = async (req: AuthRequest,res: Response, next: NextFunctio
     }
 }
 
-export const getSingleKiosk = async (req: AuthRequest,res: Response, next: NextFunction) => {
+export const getSingleKiosk = async (req: Request,res: Response, next: NextFunction) => {
     try {
         const { id } = req.params
         
@@ -67,7 +66,7 @@ export const getSingleKiosk = async (req: AuthRequest,res: Response, next: NextF
 
 }
 
-export const getAllKiosks = async (req: AuthRequest,res: Response, next: NextFunction) => {
+export const getAllKiosks = async (req: Request,res: Response, next: NextFunction) => {
     try {
         const page = parseInt(req.query.page as string)  || 1
         const limit = parseInt(req.query.limit as string) || 10
@@ -107,7 +106,7 @@ export const getAllKiosks = async (req: AuthRequest,res: Response, next: NextFun
     }
 }
 
-export const editKiosk = async (req: AuthRequest, res: Response, next: NextFunction) => {
+export const editKiosk = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const kioskId = req.params.id;
   
@@ -150,7 +149,7 @@ export const editKiosk = async (req: AuthRequest, res: Response, next: NextFunct
     }
   };
 
-export const deleteKiosk = async (req: AuthRequest,res: Response, next: NextFunction) => {
+export const deleteKiosk = async (req: Request,res: Response, next: NextFunction) => {
     try {
 
         const kioskId = req.params.id;
