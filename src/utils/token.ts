@@ -10,7 +10,7 @@ export const generateToken = (id :string, role:string, res : any) => {
         maxAge:  24 * 60 * 60 * 1000,//MS
         httpOnly: true, // prevent XSS attacks cross-site scripting attacks
         sameSite: "strict", // prevent CSRF attacks
-        secure: false
+        secure: config.NODE_ENV === "production"
     })
     
     return token;
