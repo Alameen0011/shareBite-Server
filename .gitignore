@@ -13,5 +13,3 @@ logs/
 
 # Debugging files
 npm-debug.log*
-
-src/config/env.ts
