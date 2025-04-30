@@ -11,8 +11,6 @@ export const protect  = async (req: AuthRequest , res: Response, next: NextFunct
 
     if(req.headers.authorization && req.headers.authorization.startsWith("Bearer")) {
         token = req.headers.authorization.split(" ")[1];
-
-        console.log(token,"token")
     }
 
     if(!token){
@@ -26,7 +24,6 @@ export const protect  = async (req: AuthRequest , res: Response, next: NextFunct
     try {
 
         const decoded =  jwt.verify(token, config.JWT_ACCESS_KEY) as DecodedToken;
-        console.log(decoded,"==========token decoded")
         req.user = { id: decoded.id, role: decoded.role };
         next();
         
