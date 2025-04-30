@@ -29,7 +29,7 @@ const httpServer = createServer(app)
 
 // Socket.IO Setup
 const io = new Server(httpServer ,{
-  cors: { origin: "*" }
+  cors: { origin: config.FRONTEND_URL }
 })
 
 console.log("io going to middleware")
@@ -46,7 +46,7 @@ registerSocketHandlers(io)
 
 // Middleware
 app.use(cors({
-  origin: config.CORS,
+  origin: config.FRONTEND_URL,
   credentials: true
 }));
 app.use(express.json());
