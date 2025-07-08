@@ -13,7 +13,11 @@ import { OAuth2Client } from "google-auth-library";
 const client = new OAuth2Client(config.GOOGLE_CLIENT_ID);
 
 // 🔹 REGISTER (Signup-send-magic-link)
-export const registerUser = async (req: Request, res: Response, next: NextFunction) => {
+export const registerUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const validatedData = signupSchema.parse(req.body);
 
@@ -38,49 +42,72 @@ export const registerUser = async (req: Request, res: Response, next: NextFuncti
       email: email,
       token: magicToken,
       role: role,
-      expiresAt: new Date(Date.now() + 15 * 60 * 1000), 
+      expiresAt: new Date(Date.now() + 15 * 60 * 1000),
     });
 
     //send email with magic link
     const magicLink = `${config.FRONTEND_URL}/auth/verify?token=${magicToken}`;
+
+    // await transporter.sendMail({
+    //   from: config.EMAIL_APP,
+    //   to: email,
+    //   subject: "Your Magic Login Link",
+    //   html: `
+    //    <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+    //   <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; padding: 30px; box-shadow: 0 0 10px rgba(0,0,0,0.05);">
+    //     <h2 style="color: #333333;">Welcome to ShareBite! 🍽️</h2>
+    //     <p style="font-size: 16px; color: #555;">
+    //       We're glad you're here. To complete your registration, please click the button below:
+    //     </p>
+    //     <div style="text-align: center; margin: 30px 0;">
+    //       <a href="${magicLink}"
+    //          style="background-color: #4CAF50; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 16px;">
+    //         Log in to your account
+    //       </a>
+    //     </div>
+    //     <p style="font-size: 14px; color: #888;">
+    //       This link will expire in 15 minutes. If you didn’t request this, please ignore this email.
+    //     </p>
+    //     <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+    //     <p style="font-size: 12px; color: #aaa; text-align: center;">
+    //       &copy; ${new Date().getFullYear()} ShareBite. All rights reserved.
+    //     </p>
+    //   </div>
+    // </div>
+    //   `,
+    // });
+
     await transporter.sendMail({
       from: config.EMAIL_APP,
       to: email,
       subject: "Your Magic Login Link",
-      html: `
-       <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
-      <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; padding: 30px; box-shadow: 0 0 10px rgba(0,0,0,0.05);">
-        <h2 style="color: #333333;">Welcome to ShareBite! 🍽️</h2>
-        <p style="font-size: 16px; color: #555;">
-          We're glad you're here. To complete your registration, please click the button below:
-        </p>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${magicLink}" 
-             style="background-color: #4CAF50; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 16px;">
-            Log in to your account
-          </a>
-        </div>
-        <p style="font-size: 14px; color: #888;">
-          This link will expire in 15 minutes. If you didn’t request this, please ignore this email.
-        </p>
-        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-        <p style="font-size: 12px; color: #aaa; text-align: center;">
-          &copy; ${new Date().getFullYear()} ShareBite. All rights reserved.
-        </p>
-      </div>
-    </div>
-      `,
+      text: `
+Welcome to ShareBite!
+
+Click the link below to log in:
+${magicLink}
+
+This link will expire in 15 minutes.
+If you did not request this, please ignore this email.
+
+— Team ShareBite
+  `.trim(),
     });
 
-    res.status(200).json({ success: true, message: "Magic link sent to your email!" });
-    
+    res
+      .status(200)
+      .json({ success: true, message: "Magic link sent to your email!" });
   } catch (error) {
     next(error);
   }
 };
 
 // 🔹 VERIFY REGISTER (verify-magic-link)
-export const verifyRegistration = async (req: Request, res: Response, next: NextFunction) => {
+export const verifyRegistration = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { token } = req.query;
 
@@ -115,22 +142,21 @@ export const verifyRegistration = async (req: Request, res: Response, next: Next
       return;
     }
 
-
     // User must not already exist
     const userExists = await User.findOne({ email });
     if (userExists) {
       res.status(400).json({ success: false, message: "User already exists" });
       return;
-    } 
+    }
 
     const user = await User.create({
       name: roles === "donor" ? "Donor" : "Volunteer",
       email,
-      role:roles,
+      role: roles,
       verified: true,
     });
 
-  await MagicToken.deleteOne({ token });
+    await MagicToken.deleteOne({ token });
 
     if (!user || !user.role) {
       res.status(400).json({
@@ -149,7 +175,7 @@ export const verifyRegistration = async (req: Request, res: Response, next: Next
       success: true,
       token: accessToken,
       role: role,
-      message: "User created successfully" ,
+      message: "User created successfully",
     });
   } catch (error) {
     next(error);
@@ -157,7 +183,11 @@ export const verifyRegistration = async (req: Request, res: Response, next: Next
 };
 
 // 🔹 LOGIN
-export const LoginUser = async (req: Request, res: Response, next: NextFunction) => {
+export const LoginUser = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const validatedData = loginSchema.parse(req.body);
 
@@ -173,7 +203,6 @@ export const LoginUser = async (req: Request, res: Response, next: NextFunction)
       return;
     }
 
-    
     if (existingUser.isBlocked) {
       res.status(403).json({
         error: "blocked",
@@ -198,34 +227,51 @@ export const LoginUser = async (req: Request, res: Response, next: NextFunction)
     //send email with magic link
     const magicLink = `${config.FRONTEND_URL}/auth/verify-login?token=${magicToken}`;
 
+    // await transporter.sendMail({
+    //   from: config.EMAIL_APP,
+    //   to: email,
+    //   subject: "Your Magic Login Link",
+    //   html: `
+    //    <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+    //   <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; padding: 30px; box-shadow: 0 0 10px rgba(0,0,0,0.05);">
+    //     <h2 style="color: #333333;">Welcome to ShareBite! 🍽️</h2>
+    //     <p style="font-size: 16px; color: #555;">
+    //       We're glad you're here. To complete your login, please click the button below:
+    //     </p>
+    //     <div style="text-align: center; margin: 30px 0;">
+    //       <a href="${magicLink}" 
+    //          style="background-color: #4CAF50; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 16px;">
+    //         Log in to your account
+    //       </a>
+    //     </div>
+    //     <p style="font-size: 14px; color: #888;">
+    //       This link will expire in 15 minutes. If you didn’t request this, please ignore this email.
+    //     </p>
+    //     <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+    //     <p style="font-size: 12px; color: #aaa; text-align: center;">
+    //       &copy; ${new Date().getFullYear()} ShareBite. All rights reserved.
+    //     </p>
+    //   </div>
+    // </div>
+    //   `,
+    // });
+
     await transporter.sendMail({
-      from: config.EMAIL_APP,
-      to: email,
-      subject: "Your Magic Login Link",
-      html: `
-       <div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
-      <div style="max-width: 600px; margin: auto; background-color: #ffffff; border-radius: 8px; padding: 30px; box-shadow: 0 0 10px rgba(0,0,0,0.05);">
-        <h2 style="color: #333333;">Welcome to ShareBite! 🍽️</h2>
-        <p style="font-size: 16px; color: #555;">
-          We're glad you're here. To complete your login, please click the button below:
-        </p>
-        <div style="text-align: center; margin: 30px 0;">
-          <a href="${magicLink}" 
-             style="background-color: #4CAF50; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block; font-size: 16px;">
-            Log in to your account
-          </a>
-        </div>
-        <p style="font-size: 14px; color: #888;">
-          This link will expire in 15 minutes. If you didn’t request this, please ignore this email.
-        </p>
-        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-        <p style="font-size: 12px; color: #aaa; text-align: center;">
-          &copy; ${new Date().getFullYear()} ShareBite. All rights reserved.
-        </p>
-      </div>
-    </div>
-      `,
-    });
+  from: config.EMAIL_APP,
+  to: email,
+  subject: "Your Magic Login Link",
+  text: `
+Welcome to ShareBite!
+
+Click the link below to log in:
+${magicLink}
+
+This link will expire in 15 minutes.
+If you did not request this, please ignore this email.
+
+— Team ShareBite
+  `.trim()
+});
 
     res.status(200).json({ success: true, message: "please check you email!" });
   } catch (error) {
@@ -234,7 +280,11 @@ export const LoginUser = async (req: Request, res: Response, next: NextFunction)
 };
 
 // 🔹 VERIFY LOGIN (verify-magic-link)
-export const verifyLogin = async (req: Request, res: Response, next: NextFunction) => {
+export const verifyLogin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const { token } = req.query;
 
@@ -257,7 +307,7 @@ export const verifyLogin = async (req: Request, res: Response, next: NextFunctio
       return;
     }
 
-    const  { email } = magicToken;
+    const { email } = magicToken;
 
     if (!email) {
       res.status(400).json({ success: false, message: "Invalid token data" });
@@ -293,8 +343,11 @@ export const verifyLogin = async (req: Request, res: Response, next: NextFunctio
 };
 
 // 🔹 GOOGLE AUTH LOGIN
-export const googleAuth = async (req: Request, res: Response, next: NextFunction) => {
-
+export const googleAuth = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   const { credential, client_id } = req.body;
   try {
     // Verify Google Token
@@ -331,7 +384,6 @@ export const googleAuth = async (req: Request, res: Response, next: NextFunction
 
     const accessToken = generateToken(id, role, res);
 
-
     res.status(201).json({
       success: true,
       token: accessToken,
@@ -347,26 +399,43 @@ export const googleAuth = async (req: Request, res: Response, next: NextFunction
 };
 
 // 🔹 NEW ACCESSTOKEN USING REFRESH
-export const refreshAccess = (req: Request, res: Response, next: NextFunction) => {
+export const refreshAccess = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     const refreshToken = req.cookies.jwt;
 
     if (!refreshToken) {
-      res.status(400).json({ success: false, message: "No refresh token provided" });
+      res
+        .status(400)
+        .json({ success: false, message: "No refresh token provided" });
       return;
     }
 
     // Verify the refresh token
-    const decoded = jwt.verify(refreshToken, config.JWT_REFRESH_KEY) as DecodedToken;
+    const decoded = jwt.verify(
+      refreshToken,
+      config.JWT_REFRESH_KEY
+    ) as DecodedToken;
 
     if (!decoded) {
-      res.status(403).json({ success: false, message: "Invalid refresh token" });
+      res
+        .status(403)
+        .json({ success: false, message: "Invalid refresh token" });
       return;
     }
 
-    const newAccessToken = jwt.sign({ id: decoded!.id, role: decoded!.role },config.JWT_ACCESS_KEY,{ expiresIn: "1d" });
+    const newAccessToken = jwt.sign(
+      { id: decoded!.id, role: decoded!.role },
+      config.JWT_ACCESS_KEY,
+      { expiresIn: "1d" }
+    );
 
-    res.status(200).json({ token: newAccessToken, success: true, role: decoded.role });
+    res
+      .status(200)
+      .json({ token: newAccessToken, success: true, role: decoded.role });
   } catch (error) {
     console.error("Error verifying refresh token:", error);
     next(error);
@@ -374,7 +443,11 @@ export const refreshAccess = (req: Request, res: Response, next: NextFunction) =
 };
 
 // 🔹 LOGOUT
-export const LogoutUser = (_req: Request, res: Response, next: NextFunction) => {
+export const LogoutUser = (
+  _req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   try {
     res.cookie("jwt", "", {
       httpOnly: true,
